@@ -1,0 +1,22 @@
+# Build directory
+build/
+xbe-inspect/build/
+
+# Xbox Executables & ISOs
+*.xbe
+*.iso
+*.bin
+
+# Big game folders
+Sega GT 2002*/
+xbe-inspect/Sega GT 2002*/
+
+# VSCode/IDE
+.vscode/
+.idea/
+
+# CMake specific
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
