@@ -12,6 +12,10 @@ namespace kernel {
 static XBOX_KPCR g_kpcr;
 static uint8_t g_dummy_thread[0x2000]; // Sahte KTHREAD nesnesi
 
+static void dummy_func() {
+    // Stub
+}
+
 void init_xbox_kpcr() {
     memset(&g_kpcr, 0, sizeof(XBOX_KPCR));
     memset(g_dummy_thread, 0, sizeof(g_dummy_thread));
@@ -21,6 +25,15 @@ void init_xbox_kpcr() {
     for (int i = 0; i < 256; i++) {
         thread_dwords[i] = safe_ptr;
     }
+    
+    // Sega GT: check at 0x104C3E requires CurrentThread+0x28 to be 0
+    thread_dwords[0x28 / 4] = 0;
+
+    // Sega GT: reads CurrentThread+0x12C and calls [eax+0x14]
+    static uint32_t fake_object[32];
+    memset(fake_object, 0, sizeof(fake_object));
+    fake_object[0x14 / 4] = (uint32_t)&dummy_func;
+    thread_dwords[0x12C / 4] = (uint32_t)fake_object;
 
     g_kpcr.Self = &g_kpcr;
     g_kpcr.Irql = 0; // PASSIVE_LEVEL (cmp al, 2 kontrolünü rahatça geçsin)

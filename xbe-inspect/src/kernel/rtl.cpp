@@ -23,9 +23,9 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlInitAnsiString(PANSI_STRING
         DestinationString->MaximumLength = len + 1;
         printf("[KERNEL] RtlInitAnsiString Metin: '%s' (Uzunluk: %u)\n", SourceString, len);
     } else {
-        DestinationString->Buffer = empty_string;
+        DestinationString->Buffer = nullptr;
         DestinationString->Length = 0;
-        DestinationString->MaximumLength = 1;
+        DestinationString->MaximumLength = 0;
     }
 }
 
@@ -39,7 +39,7 @@ extern "C" uint32_t __attribute__((__stdcall__)) xbox_RtlNtStatusToDosError(uint
 extern "C" void __attribute__((__stdcall__)) xbox_RtlZeroMemory(void* Destination, size_t Length) {
     xbe::record_kernel_call(300);
     printf("[KERNEL] RtlZeroMemory(Dest: %p, Length: 0x%X)\n", Destination, (unsigned int)Length);
-    if (Destination && Length > 0) {
+    if (Destination && Length > 0 && Length < 0x100000) {
         std::memset(Destination, 0, Length);
     }
 }
@@ -47,7 +47,15 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlZeroMemory(void* Destinatio
 extern "C" void __attribute__((__stdcall__)) xbox_RtlFillMemory(void* Destination, size_t Length, uint8_t Fill) {
     xbe::record_kernel_call(301);
     printf("[KERNEL] RtlFillMemory(Dest: %p, Length: 0x%X, Fill: 0x%02X)\n", Destination, (unsigned int)Length, Fill);
-    if (Destination && Length > 0) {
+    
+    printf("Code dump at 0x104C20: ");
+    uint8_t* code = (uint8_t*)0x104C20;
+    for(int i=0; i<64; i++) {
+        printf("%02X ", code[i]);
+    }
+    printf("\n");
+    
+    if (Destination && Length > 0 && Length < 0x100000) {
         std::memset(Destination, Fill, Length);
     }
 }
@@ -55,7 +63,7 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlFillMemory(void* Destinatio
 extern "C" void __attribute__((__stdcall__)) xbox_RtlMoveMemory(void* Destination, const void* Source, size_t Length) {
     xbe::record_kernel_call(302);
     printf("[KERNEL] RtlMoveMemory(Dest: %p, Src: %p, Length: 0x%X)\n", Destination, Source, (unsigned int)Length);
-    if (Destination && Source && Length > 0) {
+    if (Destination && Source && Length > 0 && Length < 0x100000) {
         std::memmove(Destination, Source, Length);
     }
 }

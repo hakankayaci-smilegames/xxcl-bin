@@ -10,8 +10,8 @@ namespace kernel {
 static std::unordered_map<uint32_t, void*> kernel_exports = {
     {255, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)}, // RtlInitAnsiString
     {300, reinterpret_cast<void*>(&xbox_RtlZeroMemory)},
-    {301, reinterpret_cast<void*>(&xbox_RtlMoveMemory)},
-    {302, reinterpret_cast<void*>(&xbox_RtlFillMemory)},
+    {301, reinterpret_cast<void*>(&xbox_RtlFillMemory)},
+    {302, reinterpret_cast<void*>(&xbox_RtlMoveMemory)},
     {184, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
     {186, reinterpret_cast<void*>(&xbox_MmFreeContiguousMemory)},
     {84,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
