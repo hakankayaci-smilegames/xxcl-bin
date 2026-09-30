@@ -36,8 +36,36 @@ void print_execution_stats() {
 }
 
 void unresolved_stub(int ordinal) {
+    uint32_t* esp_ptr;
+    asm volatile("mov %%ebp, %0" : "=r"(esp_ptr)); 
+    // Wait, unresolved_stub uses EBP for its frame.
+    // So esp_ptr (EBP) points to saved EBP.
+    // [EBP+0] = saved EBP
+    // [EBP+4] = return address (to trampoline)
+    // [EBP+8] = ordinal
+    // The trampoline did: pushad (32 bytes). Before pushad, return address to game was on stack.
+    // So the return address to the game is at EBP + 8 (ordinal) + 32 (pushad) + 4 (return address from call unresolved_stub)
+    
+    // Let's just use __builtin_return_address(0) which is trampoline, and __builtin_frame_address(1)? No.
+    // Let's do it safely:
+    uint32_t ebp_val;
+    asm volatile("mov %%ebp, %0" : "=r"(ebp_val));
+    uint32_t* ebp_ptr = (uint32_t*)ebp_val;
+    
+    // ebp_ptr[0] = saved EBP
+    // ebp_ptr[1] = return address to trampoline
+    // ebp_ptr[2] = ordinal
+    // Actually, trampoline doesn't set up EBP.
+    
     record_kernel_call(ordinal);
     std::cout << "\n\033[1;31m[UNIMPLEMENTED ORDINAL]\033[0m Ordinal " << std::dec << ordinal << " cagrildi!\n";
+    
+    // To find the return address to the game, let's just dump the stack upwards from EBP
+    std::cout << "[STACK DUMP FROM UNRESOLVED_STUB]:\n";
+    for(int i = 0; i < 20; i++) {
+        std::cout << "EBP+" << (i*4) << ": 0x" << std::hex << ebp_ptr[i] << "\n";
+    }
+    
     print_execution_stats();
     std::cout << "Yurutme desteklenmeyen ordinal yuzunden guvenli sekilde durduruldu.\n";
     exit(1);

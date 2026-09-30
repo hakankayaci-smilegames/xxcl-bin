@@ -5,10 +5,13 @@
 #include "ps.hpp"
 #include <unordered_map>
 
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_Ordinal187(uint32_t arg1);
+
 namespace xbe {
 namespace kernel {
 
 static std::unordered_map<uint32_t, void*> kernel_exports = {
+    {187, reinterpret_cast<void*>(&xbox_Ordinal187)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
     {300, reinterpret_cast<void*>(&xbox_RtlZeroMemory)},

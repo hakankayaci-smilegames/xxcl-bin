@@ -11,6 +11,8 @@
 #include <ucontext.h>
 #include <cstdio>
 
+extern "C" void wait_for_xbox_threads();
+
 namespace xbe {
 
 static void print_str(const char* str) {
@@ -201,6 +203,9 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     
     std::cout << "\n\033[1;32m[BASARILI]\033[0m Entry Point calistirildi! Donus degeri (EAX): " << ret_val << "\n";
     
+    // Wait for the spawned game thread to finish
+    wait_for_xbox_threads();
+
     return true;
 }
 

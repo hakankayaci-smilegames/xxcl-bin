@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <pthread.h>
 
-// NTSTATUS (basitce)
 typedef int32_t NTSTATUS;
 
 extern "C" {
@@ -18,3 +18,5 @@ extern "C" {
         uint32_t arg10
     );
 }
+
+extern "C" void wait_for_xbox_threads();
