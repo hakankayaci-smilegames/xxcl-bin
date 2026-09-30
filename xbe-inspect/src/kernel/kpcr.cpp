@@ -29,13 +29,14 @@ void init_xbox_kpcr() {
     // Sega GT: check at 0x104C3E requires CurrentThread+0x28 to be 0
     thread_dwords[0x28 / 4] = 0;
 
-    // Sega GT: reads CurrentThread+0x12C and calls [eax+0x14]
-    static uint32_t fake_object[32];
-    memset(fake_object, 0, sizeof(fake_object));
-    fake_object[0x14 / 4] = (uint32_t)&dummy_func;
-    thread_dwords[0x12C / 4] = (uint32_t)fake_object;
+    // Remove the fake_object hack, we want CurrentThread+0x12C to be 0 so it uses the native path
+    thread_dwords[0x12C / 4] = 0;
+
+    static uint8_t g_dummy_stack[0x10000];
 
     g_kpcr.Self = &g_kpcr;
+    g_kpcr.StackBase = g_dummy_stack + sizeof(g_dummy_stack);
+    g_kpcr.StackLimit = g_dummy_stack;
     g_kpcr.Irql = 0; // PASSIVE_LEVEL (cmp al, 2 kontrolünü rahatça geçsin)
     g_kpcr.CurrentThreadPtr = g_dummy_thread;
     g_kpcr.CurrentThread = g_dummy_thread;

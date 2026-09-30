@@ -1,0 +1,23 @@
+#include "ps.hpp"
+#include <cstdio>
+
+extern "C" {
+    NTSTATUS __attribute__((__stdcall__)) xbox_PsCreateSystemThreadEx(
+        uint32_t* ThreadHandle,
+        uint32_t arg2,
+        uint32_t arg3,
+        uint32_t arg4,
+        uint32_t arg5,
+        uint32_t arg6,
+        uint32_t arg7,
+        uint32_t arg8,
+        uint32_t arg9,
+        uint32_t arg10
+    ) {
+        printf("[KERNEL] PsCreateSystemThreadEx cagrildi. ThreadHandle: %p\n", ThreadHandle);
+        if (ThreadHandle) {
+            *ThreadHandle = 0x8899AABB; // Dummy Thread Handle
+        }
+        return 0; // STATUS_SUCCESS
+    }
+}

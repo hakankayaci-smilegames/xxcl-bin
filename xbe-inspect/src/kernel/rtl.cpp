@@ -26,6 +26,10 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlInitAnsiString(PANSI_STRING
         DestinationString->Buffer = nullptr;
         DestinationString->Length = 0;
         DestinationString->MaximumLength = 0;
+        
+        // DEBUG DUMP
+        uint32_t val = *(uint32_t*)0x1B6C6C;
+        printf("[DEBUG] Value at 0x1B6C6C is 0x%08X\n", val);
     }
 }
 

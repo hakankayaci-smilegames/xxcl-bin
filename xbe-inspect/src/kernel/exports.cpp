@@ -2,13 +2,15 @@
 #include "rtl.hpp"
 #include "mm.hpp"
 #include "hal.hpp"
+#include "ps.hpp"
 #include <unordered_map>
 
 namespace xbe {
 namespace kernel {
 
 static std::unordered_map<uint32_t, void*> kernel_exports = {
-    {255, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)}, // RtlInitAnsiString
+    {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
+    {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
     {300, reinterpret_cast<void*>(&xbox_RtlZeroMemory)},
     {301, reinterpret_cast<void*>(&xbox_RtlFillMemory)},
     {302, reinterpret_cast<void*>(&xbox_RtlMoveMemory)},
