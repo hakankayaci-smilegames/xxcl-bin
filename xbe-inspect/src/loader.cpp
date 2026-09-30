@@ -1,5 +1,6 @@
 #include "loader.hpp"
 #include "kernel.hpp"
+#include "kernel/kpcr.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/mman.h>
@@ -8,6 +9,7 @@
 #include <cerrno>
 #include <signal.h>
 #include <ucontext.h>
+#include <cstdio>
 
 namespace xbe {
 
@@ -37,12 +39,50 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
     uintptr_t eip = context->uc_mcontext.gregs[REG_EIP];
     uintptr_t fault_addr = reinterpret_cast<uintptr_t>(info->si_addr);
 
-    print_str("\n\033[1;31m[CRASH]\033[0m SIGSEGV yakalandi!\n");
-    print_str("Crash Adresi (Fault): ");
-    print_hex(fault_addr);
-    print_str("Instruction Pointer (EIP): ");
-    print_hex(eip);
-    print_str("(Muhtemelen baglanmamis bir Kernel Ordinal cagirildi veya invalid bellek erisimi)\n");
+    printf("\n\033[1;31m[CRASH]\033[0m SIGSEGV yakalandi!\n");
+    printf("Crash Adresi (Fault): 0x%08X\n", fault_addr);
+    printf("Instruction Pointer (EIP): 0x%08X\n", eip);
+    printf("(Muhtemelen baglanmamis bir Kernel Ordinal cagirildi veya invalid bellek erisimi)\n");
+
+#if defined(__i386__)
+    printf("\n[REGISTERS]\n");
+    printf("EAX: 0x%08X  EBX: 0x%08X  ECX: 0x%08X  EDX: 0x%08X\n", 
+           context->uc_mcontext.gregs[REG_EAX], context->uc_mcontext.gregs[REG_EBX], 
+           context->uc_mcontext.gregs[REG_ECX], context->uc_mcontext.gregs[REG_EDX]);
+    printf("ESI: 0x%08X  EDI: 0x%08X  EBP: 0x%08X  ESP: 0x%08X\n", 
+           context->uc_mcontext.gregs[REG_ESI], context->uc_mcontext.gregs[REG_EDI], 
+           context->uc_mcontext.gregs[REG_EBP], context->uc_mcontext.gregs[REG_ESP]);
+    printf("EIP: 0x%08X\n", context->uc_mcontext.gregs[REG_EIP]);
+
+    uint8_t* pc = (uint8_t*)context->uc_mcontext.gregs[REG_EIP];
+    printf("\n[CODE DUMP @ EIP]: ");
+    
+    // Check if pc looks somewhat valid before dereferencing to avoid double fault
+    if (reinterpret_cast<uintptr_t>(pc) >= 0x10000) {
+        for (int i = -8; i < 16; i++) {
+            if (i == 0) printf("[->%02X] ", pc[i]);
+            else printf("%02X ", pc[i]);
+        }
+    } else {
+        printf(" (EIP is invalid, cannot read instructions) ");
+    }
+    printf("\n");
+
+    uint32_t* stack_ptr = (uint32_t*)context->uc_mcontext.gregs[REG_ESP];
+    printf("\n[STACK DUMP @ ESP]: 0x%08X 0x%08X 0x%08X 0x%08X\n", 
+           stack_ptr[0], stack_ptr[1], stack_ptr[2], stack_ptr[3]);
+           
+    uint8_t* call_site = (uint8_t*)0x00106C30;
+    printf("\n[CALL SITE DUMP @ 0x106C30]:\n");
+    // Check if the area is readable first (it's inside .text so it should be)
+    for (int i = 0; i < 48; i++) {
+        printf("%02X ", call_site[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+    }
+    printf("\n");
+#endif
+
+    xbe::print_execution_stats();
 
     _exit(1);
 }
@@ -150,6 +190,9 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     uintptr_t ep_addr = res.entry_point_retail + delta;
     
     std::cout << "[LOADER] Entry Point (0x" << std::hex << ep_addr << std::dec << ") cagiriliyor...\n";
+    
+    xbe::kernel::init_xbox_kpcr();
+    xbe::start_execution_timer();
     
     typedef int (*XboxEntryPointFunc)();
     XboxEntryPointFunc ep_func = reinterpret_cast<XboxEntryPointFunc>(ep_addr);

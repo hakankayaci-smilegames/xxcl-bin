@@ -1,0 +1,17 @@
+#!/bin/bash
+# XXCL (Xbox XBE Compatibility Layer) Wrapper Script
+# Bu script xbe-inspect aracini projeyi derlemis varsayarak kolayca calistirmayi saglar.
+
+# Sembolik linki (symlink) takip ederek asil dosyanin bulundugu klasoru bul
+REAL_SCRIPT=$(readlink -f "${BASH_SOURCE[0]}")
+DIR="$(cd "$(dirname "$REAL_SCRIPT")" >/dev/null 2>&1 && pwd)"
+
+EXECUTABLE="$DIR/xbe-inspect/build/xbe-inspect"
+
+if [ ! -f "$EXECUTABLE" ]; then
+    echo "Hata: xbe-inspect derlenmemis! Once 'cd $DIR/xbe-inspect/build && cmake .. && make' komutlarini calistirin."
+    exit 1
+fi
+
+# Argumanlari oldugu gibi xbe-inspect'e ilet
+exec "$EXECUTABLE" "$@"

@@ -47,3 +47,8 @@
 ## 9. Çift Dilli Yerelleştirme İlkesi (Bilingual Localization First)
 - **Programlar yapıldığı ilk andan itibaren en az Türkçe/İngilizce dil desteğine sahip olmalı, ve dil ekleme yapısı oldukça kolay ve modüler olmalıdır**
 
+## 10. Xbox Uyumluluk Katmanı (XXCL) & Kernel Standartları
+- **Genel Uyumluluk İlkesi (Sıfır Oyun Özel Hack):** Projeyi modüler bir Xbox uyumluluk katmanı (compatibility layer) olarak geliştiriyoruz. Sega GT'ye özel hack veya bypass yazmak kesinlikle yasaktır; tüm fonksiyonlar başka oyunlarda da (örn. Halo, JSRF) doğrudan çalışacak genel Xbox Kernel API standartlarına uygun olmalıdır.
+- **Temiz ve Modüler Mimari:** `main.cpp` veya loader kodunu kirletme. Kernel fonksiyonlarını `src/kernel/` altında modüler tut.
+- **Calling Convention (stdcall):** Tüm Xbox kernel çağrıları `__attribute__((__stdcall__))` (veya `__stdcall`) kuralına uygun yazılmalı, stack parametre temizliği doğru yapılmalıdır.
+- **Öncelikli Hedef (Ordinal 255):** Ordinal 255 (`RtlInitAnsiString`) fonksiyonunu standart `ANSI_STRING` yapısına göre implemente edip stack çökmesini önlemek ve yürütmeyi bir sonraki kernel çağrısına taşımak.

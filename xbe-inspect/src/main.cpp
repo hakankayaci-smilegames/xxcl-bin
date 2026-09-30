@@ -24,6 +24,8 @@ void print_str_row(const std::string& label, const std::string& value, const std
 }
 
 int main(int argc, char* argv[]) {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
     bool run_mode = false;
     std::string filepath;
 

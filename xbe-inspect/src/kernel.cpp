@@ -1,13 +1,46 @@
 #include "kernel.hpp"
+#include "kernel/exports.hpp"
 #include <iostream>
 #include <sys/mman.h>
 #include <cstring>
 #include <cerrno>
+#include <chrono>
+#include <cstdlib>
 
 namespace xbe {
 
-void generic_stub(int ordinal) {
-    std::cout << "[KERNEL HOOK] Cagrilan Ordinal: " << std::dec << ordinal << std::endl;
+static std::chrono::time_point<std::chrono::high_resolution_clock> g_start_time;
+static uint64_t g_kernel_call_count = 0;
+static uint32_t g_last_ordinal = 0;
+
+void start_execution_timer() {
+    g_start_time = std::chrono::high_resolution_clock::now();
+    g_kernel_call_count = 0;
+    g_last_ordinal = 0;
+}
+
+void record_kernel_call(uint32_t ordinal) {
+    g_kernel_call_count++;
+    g_last_ordinal = ordinal;
+}
+
+void print_execution_stats() {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - g_start_time).count();
+    
+    std::cout << "\n\033[1;36m[DEBUG INFO] --- YURUTME ISTATISTIKLERI ---\033[0m\n";
+    std::cout << "Gecen Sure             : " << duration_ms << " ms\n";
+    std::cout << "Yapilan Kernel Cagrisi : " << std::dec << g_kernel_call_count << " adet\n";
+    std::cout << "Son Cagrilan Ordinal   : " << (g_last_ordinal ? std::to_string(g_last_ordinal) : "Yok") << "\n";
+    std::cout << "\033[1;36m-------------------------------------------\033[0m\n";
+}
+
+void unresolved_stub(int ordinal) {
+    record_kernel_call(ordinal);
+    std::cout << "\n\033[1;31m[UNIMPLEMENTED ORDINAL]\033[0m Ordinal " << std::dec << ordinal << " cagrildi!\n";
+    print_execution_stats();
+    std::cout << "Yurutme desteklenmeyen ordinal yuzunden guvenli sekilde durduruldu.\n";
+    exit(1);
 }
 
 static uint8_t* trampolines = nullptr;
@@ -27,48 +60,58 @@ void resolve_kernel_imports(const ParseResult& res, uintptr_t delta) {
 
     uint32_t* thunk_table = reinterpret_cast<uint32_t*>(res.kernel_thunk_address_retail + delta);
     int hooked_count = 0;
+    int resolved_count = 0;
     
     for (size_t i = 0; i < res.kernel_imports.size(); ++i) {
         uint32_t ordinal = res.kernel_imports[i];
         
-        // Generate 32-bit x86 trampoline
-        uint8_t* tramp = trampolines + (i * 32);
-        
-        int p = 0;
-        // pushad (save all registers)
-        tramp[p++] = 0x60;
-        
-        // push ordinal (cdecl arg 1)
-        tramp[p++] = 0x68;
-        *reinterpret_cast<uint32_t*>(&tramp[p]) = ordinal;
-        p += 4;
-        
-        // mov eax, &generic_stub
-        tramp[p++] = 0xB8;
-        *reinterpret_cast<uint32_t*>(&tramp[p]) = reinterpret_cast<uint32_t>(&generic_stub);
-        p += 4;
-        
-        // call eax
-        tramp[p++] = 0xFF;
-        tramp[p++] = 0xD0;
-        
-        // add esp, 4 (clean up our pushed ordinal)
-        tramp[p++] = 0x83;
-        tramp[p++] = 0xC4;
-        tramp[p++] = 0x04;
-        
-        // popad (restore all registers)
-        tramp[p++] = 0x61;
-        
-        // ret (Warning: Xbox uses stdcall, this might leave stack dirty if original func had args)
-        tramp[p++] = 0xC3;
+        // Eger ordinal moduler kernel implementasyonunda varsa dogrudan function pointer ver
+        void* handler = kernel::get_kernel_export(ordinal);
+        if (handler) {
+            thunk_table[i] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(handler));
+            std::cout << "[KERNEL HOOK MAP] Ordinal " << std::dec << ordinal << " -> NATIVE (__stdcall) baglandi.\n";
+            resolved_count++;
+        } else {
+            std::cout << "[KERNEL HOOK MAP] Ordinal " << std::dec << ordinal << " -> TRAMPOLINE (Desteklenmiyor) baglandi.\n";
+            // Desteklenmeyen (unresolved) ordinaller icin coken (veya en azindan loglayan) trampoline
+            uint8_t* tramp = trampolines + (i * 32);
+            
+            int p = 0;
+            // pushad (save all registers)
+            tramp[p++] = 0x60;
+            
+            // push ordinal (cdecl arg 1)
+            tramp[p++] = 0x68;
+            *reinterpret_cast<uint32_t*>(&tramp[p]) = ordinal;
+            p += 4;
+            
+            // mov eax, &unresolved_stub
+            tramp[p++] = 0xB8;
+            *reinterpret_cast<uint32_t*>(&tramp[p]) = reinterpret_cast<uint32_t>(&unresolved_stub);
+            p += 4;
+            
+            // call eax
+            tramp[p++] = 0xFF;
+            tramp[p++] = 0xD0;
+            
+            // add esp, 4 (clean up our pushed ordinal)
+            tramp[p++] = 0x83;
+            tramp[p++] = 0xC4;
+            tramp[p++] = 0x04;
+            
+            // popad (restore all registers)
+            tramp[p++] = 0x61;
+            
+            // ret (Dikkat: Sadece debug amacli donus, orjinal cagri parametreliyse stack kirilir)
+            tramp[p++] = 0xC3;
 
-        // Overwrite thunk entry
-        thunk_table[i] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tramp));
+            thunk_table[i] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tramp));
+        }
         hooked_count++;
     }
     
-    std::cout << "[KERNEL] " << std::dec << hooked_count << " adet kernel fonksiyonu kancalandi (Hooked).\n";
+    std::cout << "[KERNEL] " << std::dec << hooked_count << " adet kernel fonksiyonu kancalandi. (" 
+              << resolved_count << " tanesi native hook).\n";
 }
 
 } // namespace xbe
