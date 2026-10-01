@@ -1,31 +1,32 @@
 #include "exports.hpp"
+#include "xbox_krnl_exports.hpp"
 #include "rtl.hpp"
+#include "ps.hpp"
+#include "ex.hpp"
+#include "ke.hpp"
+#include "ob.hpp"
 #include "mm.hpp"
 #include "hal.hpp"
-#include "ps.hpp"
-#include "ke.hpp"
-#include "ex.hpp"
 #include <unordered_map>
-
-extern "C" uint32_t __attribute__((__stdcall__)) xbox_Ordinal187(uint32_t arg1);
-extern "C" uint32_t __attribute__((__stdcall__)) xbox_Ordinal107();
+#include <cstdio>
 
 namespace xbe {
 namespace kernel {
 
 static std::unordered_map<uint32_t, void*> kernel_exports = {
-    {187, reinterpret_cast<void*>(&xbox_Ordinal187)},
-    {107, reinterpret_cast<void*>(&xbox_Ordinal107)},
-    {24, reinterpret_cast<void*>(&xbox_ExAllocatePoolWithTag)},
-    {113, reinterpret_cast<void*>(&xbox_KeSetEvent)},
-    {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
-    {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
-    {300, reinterpret_cast<void*>(&xbox_RtlZeroMemory)},
-    {301, reinterpret_cast<void*>(&xbox_RtlFillMemory)},
-    {302, reinterpret_cast<void*>(&xbox_RtlMoveMemory)},
+    {24,  reinterpret_cast<void*>(&xbox_ExQueryNonVolatileSetting)},
+    {84,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
+    {107, reinterpret_cast<void*>(&xbox_KeInitializeDpc)},
+    {113, reinterpret_cast<void*>(&xbox_KeInitializeTimerEx)},
+    {149, reinterpret_cast<void*>(&xbox_KeSetTimer)},
     {184, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
     {186, reinterpret_cast<void*>(&xbox_MmFreeContiguousMemory)},
-    {84,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
+    {187, reinterpret_cast<void*>(&xbox_NtClose)},
+    {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
+    {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
+    {300, reinterpret_cast<void*>(&xbox_RtlMultiByteToUnicodeSize)}, // TODO: check if actually implemented
+    {301, reinterpret_cast<void*>(&xbox_RtlNtStatusToDosError)},
+    {302, reinterpret_cast<void*>(&xbox_RtlRaiseException)}, // TODO: check if actually implemented
 };
 
 void* get_kernel_export(uint32_t ordinal) {
@@ -34,6 +35,13 @@ void* get_kernel_export(uint32_t ordinal) {
         return it->second;
     }
     return nullptr;
+}
+
+const char* get_kernel_export_name(uint32_t ordinal) {
+    if (ordinal < 400) {
+        return xbox_krnl_names[ordinal];
+    }
+    return "Unknown";
 }
 
 } // namespace kernel

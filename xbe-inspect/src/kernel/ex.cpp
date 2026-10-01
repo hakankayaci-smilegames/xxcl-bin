@@ -1,24 +1,29 @@
 #include "ex.hpp"
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 
 extern "C" {
-    void* __attribute__((__stdcall__)) xbox_ExAllocatePoolWithTag(uint32_t PoolType, size_t NumberOfBytes, uint32_t Tag) {
-        void* ptr = nullptr;
+    NTSTATUS __attribute__((__stdcall__)) xbox_ExQueryNonVolatileSetting(
+        uint32_t ValueIndex,
+        uint32_t* Type,
+        uint8_t* Value,
+        uint32_t ValueLength,
+        uint32_t* ResultLength
+    ) {
+        printf("[KERNEL] ExQueryNonVolatileSetting(Index: %u, Length: %u) cagrildi.\n", ValueIndex, ValueLength);
         
-        // 16-byte aligned allocation
-        if (posix_memalign(&ptr, 16, NumberOfBytes) != 0) {
-            ptr = nullptr;
+        // Mocking EEPROM/Refurb info reading.
+        // Return STATUS_SUCCESS (0).
+        if (ResultLength) {
+            *ResultLength = 0;
         }
-
-        if (ptr) {
-            memset(ptr, 0, NumberOfBytes);
+        if (Type) {
+            *Type = 4; // REG_DWORD or something?
         }
-
-        printf("[KERNEL] ExAllocatePoolWithTag(Ordinal 24?) cagrildi -> PoolType: %u, Boyut: %zu bayt, Tag: 0x%08X ('%.4s') -> Ptr: %p\n", 
-               PoolType, NumberOfBytes, Tag, (const char*)&Tag, ptr);
-
-        return ptr;
+        if (Value && ValueLength > 0) {
+            memset(Value, 0, ValueLength); // Zero out the buffer
+        }
+        
+        return 0; // STATUS_SUCCESS
     }
 }

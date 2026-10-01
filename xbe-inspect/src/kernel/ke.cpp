@@ -1,27 +1,25 @@
 #include "ke.hpp"
 #include <cstdio>
-
-// Xbox/NT kernel DISPATCHER_HEADER mock
-struct XBOX_DISPATCHER_HEADER {
-    uint8_t Type;
-    uint8_t Absolute;
-    uint8_t Size;
-    uint8_t Inserted;
-    int32_t SignalState;
-    // LIST_ENTRY WaitListHead...
-};
+#include <cstring>
 
 extern "C" {
-    int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int32_t Increment, uint8_t Wait) {
-        printf("[KERNEL] KeSetEvent cagrildi. Event: %p\n", Event);
-        
-        if (Event) {
-            auto* header = reinterpret_cast<XBOX_DISPATCHER_HEADER*>(Event);
-            int32_t previous_state = header->SignalState;
-            header->SignalState = 1; // Event signaled
-            return previous_state;
+    void __attribute__((__stdcall__)) xbox_KeInitializeDpc(void* Dpc, void* DeferredRoutine, void* DeferredContext) {
+        printf("[KERNEL] KeInitializeDpc(Dpc: %p, Routine: %p, Context: %p) cagrildi.\n", Dpc, DeferredRoutine, DeferredContext);
+        if (Dpc) {
+            memset(Dpc, 0, 0x20); // Dummy size for KDPC
         }
-        
-        return 0;
+    }
+
+    void __attribute__((__stdcall__)) xbox_KeInitializeTimerEx(void* Timer, uint32_t Type) {
+        printf("[KERNEL] KeInitializeTimerEx(Timer: %p, Type: %u) cagrildi.\n", Timer, Type);
+        if (Timer) {
+            memset(Timer, 0, 0x40); // Dummy size for KTIMER
+        }
+    }
+
+    uint32_t __attribute__((__stdcall__)) xbox_KeSetTimer(void* Timer, uint32_t DueTimeLow, uint32_t DueTimeHigh, void* Dpc) {
+        printf("[KERNEL] KeSetTimer(Timer: %p, DueTimeLow: %u, DueTimeHigh: %u, Dpc: %p) cagrildi.\n", Timer, DueTimeLow, DueTimeHigh, Dpc);
+        // Returns BOOLEAN (TRUE if the timer was already in the timer queue)
+        return 0; // FALSE
     }
 }
