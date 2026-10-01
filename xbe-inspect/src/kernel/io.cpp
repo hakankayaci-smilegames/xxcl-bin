@@ -179,3 +179,44 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryVolumeInformationFi
 
 } // namespace kernel
 } // namespace xbe
+
+namespace xbe {
+namespace kernel {
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_IoCreateSymbolicLink(
+    xbe::kernel::STRING* SymbolicLinkName,
+    xbe::kernel::STRING* DeviceName
+) {
+    xbe::record_kernel_call(67);
+    if (!SymbolicLinkName || !DeviceName || !SymbolicLinkName->Buffer || !DeviceName->Buffer) {
+        return 0xC000000D; // STATUS_INVALID_PARAMETER
+    }
+    
+    std::string link(SymbolicLinkName->Buffer, SymbolicLinkName->Length);
+    std::string target(DeviceName->Buffer, DeviceName->Length);
+    
+    printf("[KERNEL] IoCreateSymbolicLink -> Link: '%s' ===> Target: '%s'\n", link.c_str(), target.c_str());
+    
+    vfs_register_symlink(link, target);
+    
+    return 0; // STATUS_SUCCESS
+}
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_IoDeleteSymbolicLink(
+    xbe::kernel::STRING* SymbolicLinkName
+) {
+    xbe::record_kernel_call(68);
+    if (!SymbolicLinkName || !SymbolicLinkName->Buffer) {
+        return 0xC000000D;
+    }
+    
+    std::string link(SymbolicLinkName->Buffer, SymbolicLinkName->Length);
+    printf("[KERNEL] IoDeleteSymbolicLink -> Link: '%s'\n", link.c_str());
+    
+    vfs_delete_symlink(link);
+    
+    return 0; // STATUS_SUCCESS
+}
+
+} // namespace kernel
+} // namespace xbe

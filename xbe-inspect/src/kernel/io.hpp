@@ -40,6 +40,15 @@ extern "C" {
         uint32_t OutputBufferLength
     );
 
+    NTSTATUS __attribute__((__stdcall__)) xbox_IoCreateSymbolicLink(
+        xbe::kernel::STRING* SymbolicLinkName,
+        xbe::kernel::STRING* DeviceName
+    );
+
+    NTSTATUS __attribute__((__stdcall__)) xbox_IoDeleteSymbolicLink(
+        xbe::kernel::STRING* SymbolicLinkName
+    );
+
     NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryVolumeInformationFile(
         void* FileHandle,
         void* IoStatusBlock,

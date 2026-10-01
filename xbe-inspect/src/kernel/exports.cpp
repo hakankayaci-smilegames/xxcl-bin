@@ -35,6 +35,8 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {300, reinterpret_cast<void*>(&xbox_RtlMultiByteToUnicodeSize)}, // TODO: check if actually implemented
     {301, reinterpret_cast<void*>(&xbox_RtlNtStatusToDosError)},
     {302, reinterpret_cast<void*>(&xbox_RtlRaiseException)}, // TODO: check if actually implemented
+    {68, reinterpret_cast<void*>(&xbox_IoDeleteSymbolicLink)},
+    {67, reinterpret_cast<void*>(&xbox_IoCreateSymbolicLink)},
 };
 
 void* get_kernel_export(uint32_t ordinal) {
