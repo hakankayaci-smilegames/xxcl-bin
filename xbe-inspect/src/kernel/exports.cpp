@@ -4,6 +4,7 @@
 #include "hal.hpp"
 #include "ps.hpp"
 #include "ke.hpp"
+#include "ex.hpp"
 #include <unordered_map>
 
 extern "C" uint32_t __attribute__((__stdcall__)) xbox_Ordinal187(uint32_t arg1);
@@ -15,6 +16,7 @@ namespace kernel {
 static std::unordered_map<uint32_t, void*> kernel_exports = {
     {187, reinterpret_cast<void*>(&xbox_Ordinal187)},
     {107, reinterpret_cast<void*>(&xbox_Ordinal107)},
+    {24, reinterpret_cast<void*>(&xbox_ExAllocatePoolWithTag)},
     {113, reinterpret_cast<void*>(&xbox_KeSetEvent)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
