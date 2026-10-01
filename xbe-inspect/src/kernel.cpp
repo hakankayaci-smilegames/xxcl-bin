@@ -61,7 +61,7 @@ void unresolved_stub(int ordinal) {
     std::cout << "\n\033[1;31m[UNIMPLEMENTED ORDINAL]\033[0m Ordinal " << std::dec << ordinal << " cagrildi!\n";
     
     // To find the return address to the game, let's just dump the stack upwards from EBP
-    std::cout << "[STACK DUMP FROM UNRESOLVED_STUB]:\n";
+    uint32_t ret_addr; asm volatile("mov 4(%%ebp), %0" : "=r"(ret_addr)); std::cout << "\n[UNRESOLVED_STUB] Return Address: 0x" << std::hex << ret_addr << "\n[STACK DUMP FROM UNRESOLVED_STUB]:\n";
     for(int i = 0; i < 20; i++) {
         std::cout << "EBP+" << (i*4) << ": 0x" << std::hex << ebp_ptr[i] << "\n";
     }

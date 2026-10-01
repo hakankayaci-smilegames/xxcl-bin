@@ -48,3 +48,24 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlRaiseException(void* Except
 
 } // namespace kernel
 } // namespace xbe
+
+namespace xbe {
+namespace kernel {
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_RtlInitializeCriticalSection(void* CriticalSection) {
+    xbe::record_kernel_call(291);
+    printf("[KERNEL] RtlInitializeCriticalSection(CS: %p) cagrildi.\n", CriticalSection);
+    if (CriticalSection) {
+        // Initialize LockCount to -1 (Unlocked state in NT)
+        // DebugInfo=0, LockCount=4, RecursionCount=8, OwningThread=12, LockSemaphore=16, SpinCount=20
+        uint32_t* cs = (uint32_t*)CriticalSection;
+        cs[0] = 0; // DebugInfo
+        cs[1] = 0xFFFFFFFF; // LockCount = -1
+        cs[2] = 0; // RecursionCount
+        cs[3] = 0; // OwningThread
+        cs[4] = 0; // LockSemaphore
+        cs[5] = 0; // SpinCount
+    }
+    return 0; // STATUS_SUCCESS
+}
+}
+}

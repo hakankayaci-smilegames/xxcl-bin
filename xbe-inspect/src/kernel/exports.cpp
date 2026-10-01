@@ -26,6 +26,7 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {187, reinterpret_cast<void*>(&xbox_NtClose)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
+    {291, reinterpret_cast<void*>(&xbox_RtlInitializeCriticalSection)},
     {300, reinterpret_cast<void*>(&xbox_RtlMultiByteToUnicodeSize)}, // TODO: check if actually implemented
     {301, reinterpret_cast<void*>(&xbox_RtlNtStatusToDosError)},
     {302, reinterpret_cast<void*>(&xbox_RtlRaiseException)}, // TODO: check if actually implemented
