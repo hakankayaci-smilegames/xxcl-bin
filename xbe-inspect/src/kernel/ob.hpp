@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "types.hpp" // needed for STRING
+#include "types.hpp"
 
 typedef int32_t NTSTATUS;
 
@@ -24,6 +24,18 @@ extern "C" {
         void* IoStatusBlock,
         uint32_t ShareAccess,
         uint32_t OpenOptions
+    );
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtDeviceIoControlFile(
+        void* FileHandle,
+        void* Event,
+        void* ApcRoutine,
+        void* ApcContext,
+        void* IoStatusBlock,
+        uint32_t IoControlCode,
+        void* InputBuffer,
+        uint32_t InputBufferLength,
+        void* OutputBuffer,
+        uint32_t OutputBufferLength
     );
 }
 

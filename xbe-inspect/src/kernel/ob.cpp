@@ -50,3 +50,34 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
 
 } // namespace kernel
 } // namespace xbe
+
+namespace xbe {
+namespace kernel {
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtDeviceIoControlFile(
+    void* FileHandle,
+    void* Event,
+    void* ApcRoutine,
+    void* ApcContext,
+    void* IoStatusBlock,
+    uint32_t IoControlCode,
+    void* InputBuffer,
+    uint32_t InputBufferLength,
+    void* OutputBuffer,
+    uint32_t OutputBufferLength
+) {
+    xbe::record_kernel_call(196);
+    printf("[KERNEL] NtDeviceIoControlFile(Handle: %p, IOCTL: 0x%08X) cagrildi.\n", FileHandle, IoControlCode);
+    
+    // Setup IO_STATUS_BLOCK
+    if (IoStatusBlock) {
+        uint32_t* iosb = (uint32_t*)IoStatusBlock;
+        iosb[0] = 0; // Status = STATUS_SUCCESS
+        iosb[1] = 0; // Information
+    }
+
+    return 0; // STATUS_SUCCESS
+}
+
+} // namespace kernel
+} // namespace xbe

@@ -21,6 +21,7 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {149, reinterpret_cast<void*>(&xbox_KeSetTimer)},
     {165, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
     {184, reinterpret_cast<void*>(&xbox_NtAllocateVirtualMemory)},
+    {196, reinterpret_cast<void*>(&xbox_NtDeviceIoControlFile)},
     {199, reinterpret_cast<void*>(&xbox_NtFreeVirtualMemory)},
     {202, reinterpret_cast<void*>(&xbox_NtOpenFile)},
     {186, reinterpret_cast<void*>(&xbox_MmFreeContiguousMemory)},
