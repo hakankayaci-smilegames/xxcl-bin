@@ -15,11 +15,13 @@ namespace kernel {
 
 static std::unordered_map<uint32_t, void*> kernel_exports = {
     {24,  reinterpret_cast<void*>(&xbox_ExQueryNonVolatileSetting)},
-    {84,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
+    {49,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
     {107, reinterpret_cast<void*>(&xbox_KeInitializeDpc)},
     {113, reinterpret_cast<void*>(&xbox_KeInitializeTimerEx)},
     {149, reinterpret_cast<void*>(&xbox_KeSetTimer)},
+    {164, reinterpret_cast<void*>(&xbox_LaunchDataPage)},
     {165, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
+    {178, reinterpret_cast<void*>(&xbox_MmPersistContiguousMemory)},
     {184, reinterpret_cast<void*>(&xbox_NtAllocateVirtualMemory)},
     {196, reinterpret_cast<void*>(&xbox_NtDeviceIoControlFile)},
     {199, reinterpret_cast<void*>(&xbox_NtFreeVirtualMemory)},

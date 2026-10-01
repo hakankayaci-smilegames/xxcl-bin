@@ -12,6 +12,9 @@ namespace kernel {
 static XBOX_KPCR g_kpcr;
 static uint8_t g_dummy_thread[0x2000]; // Sahte KTHREAD nesnesi
 
+extern "C" void __attribute__((__stdcall__)) dummy_func_2args(uint32_t a, uint32_t b) {
+    printf("[KERNEL] dummy_func_2args(%u, %u) cagrildi.\n", a, b);
+}
 static void dummy_func() {
     // Stub
 }
@@ -31,6 +34,8 @@ void init_xbox_kpcr() {
 
     // Remove the fake_object hack, we want CurrentThread+0x12C to be 0 so it uses the native path
     thread_dwords[0x12C / 4] = 0;
+    thread_dwords[0x250 / 4] = safe_ptr;
+    reinterpret_cast<uint32_t*>(safe_ptr)[0x14 / 4] = reinterpret_cast<uint32_t>(&dummy_func_2args);
 
     static uint8_t g_dummy_stack[0x10000];
 

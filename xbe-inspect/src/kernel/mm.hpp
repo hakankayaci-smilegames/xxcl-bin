@@ -24,5 +24,11 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtFreeVirtualMemory(
     uint32_t FreeType
 );
 
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_MmPersistContiguousMemory(
+    void* BaseAddress,
+    uint32_t NumberOfBytes,
+    uint8_t Persist
+);
+
 } // namespace kernel
 } // namespace xbe

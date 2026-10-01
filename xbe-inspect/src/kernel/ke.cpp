@@ -22,4 +22,7 @@ extern "C" {
         // Returns BOOLEAN (TRUE if the timer was already in the timer queue)
         return 0; // FALSE
     }
+
+    uint8_t launch_data_page_buffer[4096];
+    void* xbox_LaunchDataPage = launch_data_page_buffer;
 }

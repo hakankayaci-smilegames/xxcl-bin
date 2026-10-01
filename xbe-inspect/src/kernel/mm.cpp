@@ -96,3 +96,21 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtFreeVirtualMemory(
 
 } // namespace kernel
 } // namespace xbe
+
+namespace xbe {
+namespace kernel {
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_MmPersistContiguousMemory(
+    void* BaseAddress,
+    uint32_t NumberOfBytes,
+    uint8_t Persist
+) {
+    xbe::record_kernel_call(178);
+    printf("[KERNEL] MmPersistContiguousMemory(BaseAddress: %p, Size: %u, Persist: %u) cagrildi.\n", BaseAddress, NumberOfBytes, Persist);
+    
+    // Nothing to do for persistence on our high-level Linux wrapper
+    return 0; // STATUS_SUCCESS
+}
+
+} // namespace kernel
+} // namespace xbe
