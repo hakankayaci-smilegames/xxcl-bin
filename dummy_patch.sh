@@ -1,2 +1,0 @@
-sed -i 's/static void dummy_func() {/extern "C" void __attribute__((__stdcall__)) dummy_func_2args(uint32_t a, uint32_t b) {\n    printf("[KERNEL] dummy_func_2args(%u, %u) cagrildi.\\n", a, b);\n}\nstatic void dummy_func() {/g' xbe-inspect/src/kernel/kpcr.cpp
-sed -i 's/thread_dwords\[0x250 \/ 4\] = 0;/thread_dwords\[0x250 \/ 4\] = safe_ptr;\n    reinterpret_cast<uint32_t*>(safe_ptr)\[0x14 \/ 4\] = reinterpret_cast<uint32_t>(\&dummy_func_2args);/g' xbe-inspect/src/kernel/kpcr.cpp

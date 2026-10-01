@@ -1,7 +1,11 @@
-#include "ob.hpp"
+#include "io.hpp"
+#include "vfs.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 namespace xbe {
 namespace kernel {
@@ -9,6 +13,9 @@ namespace kernel {
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(uint32_t Handle) {
     xbe::record_kernel_call(187);
     printf("[KERNEL] NtClose(Handle: 0x%08X) cagrildi.\n", Handle);
+    if (Handle != 0x8899AABB && Handle < 0x10000) {
+        close((int)Handle);
+    }
     return 0; // STATUS_SUCCESS
 }
 
@@ -22,19 +29,30 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
 ) {
     xbe::record_kernel_call(202);
     
+    std::string xbox_path = "";
     if (ObjectAttributes && ObjectAttributes->ObjectName && ObjectAttributes->ObjectName->Buffer) {
-        char safe_name[256];
         uint16_t len = ObjectAttributes->ObjectName->Length;
         if (len > 255) len = 255;
-        std::memcpy(safe_name, ObjectAttributes->ObjectName->Buffer, len);
-        safe_name[len] = '\0';
-        printf("[KERNEL] NtOpenFile('%s', DesiredAccess: 0x%08X) cagrildi.\n", safe_name, DesiredAccess);
-    } else {
-        printf("[KERNEL] NtOpenFile(NULL, DesiredAccess: 0x%08X) cagrildi.\n", DesiredAccess);
+        char temp[256];
+        std::memcpy(temp, ObjectAttributes->ObjectName->Buffer, len);
+        temp[len] = '\0';
+        xbox_path = temp;
     }
 
+    std::string linux_path = vfs_translate_path(xbox_path);
+    printf("[KERNEL] NtOpenFile('%s' -> '%s', DesiredAccess: 0x%08X) cagrildi.\n", xbox_path.c_str(), linux_path.c_str(), DesiredAccess);
+
     if (FileHandle) {
-        *FileHandle = (void*)0x8899AABB;
+        int fd = open(linux_path.c_str(), O_RDWR);
+        if (fd < 0) {
+            fd = open(linux_path.c_str(), O_RDONLY);
+        }
+        
+        if (fd >= 0) {
+            *FileHandle = (void*)(intptr_t)fd;
+        } else {
+            *FileHandle = (void*)0x8899AABB;
+        }
     }
     
     if (IoStatusBlock) {
@@ -99,6 +117,61 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtDeviceIoControlFile(
         uint32_t* iosb = (uint32_t*)IoStatusBlock;
         iosb[0] = 0; // Status = STATUS_SUCCESS
         iosb[1] = 0; // Information
+    }
+
+    return 0; // STATUS_SUCCESS
+}
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryVolumeInformationFile(
+    void* FileHandle,
+    void* IoStatusBlock,
+    void* FsInformation,
+    uint32_t Length,
+    uint32_t FsInformationClass
+) {
+    xbe::record_kernel_call(218);
+    printf("[KERNEL] NtQueryVolumeInformationFile(Handle: %p, Class: %u, Length: %u) cagrildi.\n", FileHandle, FsInformationClass, Length);
+
+    uint32_t info_size = 0;
+
+    if (FsInformation && Length > 0) {
+        memset(FsInformation, 0, Length);
+
+        if (FsInformationClass == 4) { // FileFsDeviceInformation
+            struct FILE_FS_DEVICE_INFORMATION {
+                uint32_t DeviceType;
+                uint32_t Characteristics;
+            };
+            if (Length >= sizeof(FILE_FS_DEVICE_INFORMATION)) {
+                auto* info = (FILE_FS_DEVICE_INFORMATION*)FsInformation;
+                info->DeviceType = 7; // FILE_DEVICE_DISK
+                info->Characteristics = 0x20; // FILE_DEVICE_IS_MOUNTED
+                info_size = sizeof(FILE_FS_DEVICE_INFORMATION);
+            }
+        } else if (FsInformationClass == 3) { // FileFsSizeInformation
+            struct FILE_FS_SIZE_INFORMATION {
+                uint64_t TotalAllocationUnits;
+                uint64_t AvailableAllocationUnits;
+                uint32_t SectorsPerAllocationUnit;
+                uint32_t BytesPerSector;
+            };
+            if (Length >= sizeof(FILE_FS_SIZE_INFORMATION)) {
+                auto* info = (FILE_FS_SIZE_INFORMATION*)FsInformation;
+                info->TotalAllocationUnits = 1000000;
+                info->AvailableAllocationUnits = 800000;
+                info->SectorsPerAllocationUnit = 32; // Sega GT expects 16KB clusters (32 * 512 = 16384)
+                info->BytesPerSector = 512;
+                info_size = sizeof(FILE_FS_SIZE_INFORMATION);
+            }
+        } else {
+            info_size = Length;
+        }
+    }
+
+    if (IoStatusBlock) {
+        uint32_t* iosb = (uint32_t*)IoStatusBlock;
+        iosb[0] = 0; // STATUS_SUCCESS
+        iosb[1] = info_size;
     }
 
     return 0; // STATUS_SUCCESS

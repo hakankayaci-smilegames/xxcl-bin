@@ -4,7 +4,7 @@
 #include "ps.hpp"
 #include "ex.hpp"
 #include "ke.hpp"
-#include "ob.hpp"
+#include "io.hpp"
 #include "mm.hpp"
 #include "hal.hpp"
 #include <unordered_map>
@@ -26,6 +26,7 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {196, reinterpret_cast<void*>(&xbox_NtDeviceIoControlFile)},
     {199, reinterpret_cast<void*>(&xbox_NtFreeVirtualMemory)},
     {202, reinterpret_cast<void*>(&xbox_NtOpenFile)},
+    {218, reinterpret_cast<void*>(&xbox_NtQueryVolumeInformationFile)},
     {186, reinterpret_cast<void*>(&xbox_MmFreeContiguousMemory)},
     {187, reinterpret_cast<void*>(&xbox_NtClose)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},

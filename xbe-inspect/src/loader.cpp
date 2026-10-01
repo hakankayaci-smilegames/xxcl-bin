@@ -1,6 +1,7 @@
 #include "loader.hpp"
 #include "kernel.hpp"
 #include "kernel/kpcr.hpp"
+#include "kernel/vfs.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/mman.h>
@@ -194,6 +195,7 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     std::cout << "[LOADER] Entry Point (0x" << std::hex << ep_addr << std::dec << ") cagiriliyor...\n";
     
     xbe::kernel::init_xbox_kpcr();
+    xbe::kernel::vfs_init();
     xbe::start_execution_timer();
     
     typedef int (*XboxEntryPointFunc)();
