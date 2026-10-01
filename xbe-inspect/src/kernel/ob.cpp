@@ -23,7 +23,6 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
     xbe::record_kernel_call(202);
     
     if (ObjectAttributes && ObjectAttributes->ObjectName && ObjectAttributes->ObjectName->Buffer) {
-        // Obfuscate the printing a bit to avoid crashing if string is bad
         char safe_name[256];
         uint16_t len = ObjectAttributes->ObjectName->Length;
         if (len > 255) len = 255;
@@ -38,7 +37,6 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
         *FileHandle = (void*)0x8899AABB;
     }
     
-    // Setup IO_STATUS_BLOCK
     if (IoStatusBlock) {
         uint32_t* iosb = (uint32_t*)IoStatusBlock;
         iosb[0] = 0; // Status
@@ -47,12 +45,6 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
 
     return 0; // STATUS_SUCCESS
 }
-
-} // namespace kernel
-} // namespace xbe
-
-namespace xbe {
-namespace kernel {
 
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtDeviceIoControlFile(
     void* FileHandle,
@@ -67,9 +59,42 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtDeviceIoControlFile(
     uint32_t OutputBufferLength
 ) {
     xbe::record_kernel_call(196);
+    if (IoControlCode == 0x0004D014 && InputBuffer != nullptr) {
+        uint8_t* in_buf = (uint8_t*)InputBuffer;
+        uint8_t cdb_opcode = in_buf[28];
+        uint8_t cdb_page = in_buf[30];
+        uint32_t data_transfer_length = *((uint32_t*)(in_buf + 12));
+        printf("[KERNEL] SCSI_PASS_THROUGH_DIRECT (Opcode: 0x%02X, Page: 0x%02X, TransferLen: %u) cagrildi.\n", cdb_opcode, cdb_page, data_transfer_length);
+        in_buf[2] = 0; /* ScsiStatus = GOOD */
+
+        void* data_buffer = *((void**)(in_buf + 20));
+        if (data_buffer && data_transfer_length >= 28 && cdb_opcode == 0x5A) {
+            uint8_t* out = (uint8_t*)data_buffer;
+            memset(out, 0, data_transfer_length);
+            out[0] = 0; out[1] = 26; /* Mode Data Length */
+            out[2] = 0; /* Medium Type */
+            out[3] = 0; /* Device-Specific Parameter */
+            out[4] = 0; out[5] = 0; /* Reserved */
+            out[6] = 0; out[7] = 0; /* Block Descriptor Length */
+            out[8] = 0x3E; /* Page Code */
+            out[9] = 0x12; /* Page Length (18 bytes) */
+            out[10] = 0x01; /* Authenticated */
+            out[11] = 0x01; /* Required by Sega GT check */
+            out[12] = 0x0D; /* Booktype Xbox */
+            out[13] = 0x00;
+            out[14] = 0x01; /* Partition Select? */
+            printf("[KERNEL] SCSI_PASS_THROUGH_DIRECT (MODE SENSE 10) mocked for Page 3E!\n");
+        }
+
+        if (IoStatusBlock) {
+            uint32_t* iosb = (uint32_t*)IoStatusBlock;
+            iosb[0] = 0; /* Status */
+            iosb[1] = data_transfer_length; /* Information */
+        }
+        return 0;
+    }
     printf("[KERNEL] NtDeviceIoControlFile(Handle: %p, IOCTL: 0x%08X) cagrildi.\n", FileHandle, IoControlCode);
     
-    // Setup IO_STATUS_BLOCK
     if (IoStatusBlock) {
         uint32_t* iosb = (uint32_t*)IoStatusBlock;
         iosb[0] = 0; // Status = STATUS_SUCCESS
