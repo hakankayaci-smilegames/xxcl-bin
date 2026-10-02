@@ -14,6 +14,10 @@ extern "C" {
     uint32_t __attribute__((__stdcall__)) xbox_RtlNtStatusToDosError(NTSTATUS Status);
     void __attribute__((__stdcall__)) xbox_RtlRaiseException(void* ExceptionRecord);
     NTSTATUS __attribute__((__stdcall__)) xbox_RtlInitializeCriticalSection(void* CriticalSection);
+
+    NTSTATUS __attribute__((__stdcall__)) xbox_RtlEnterCriticalSection(void* CriticalSection);
+    NTSTATUS __attribute__((__stdcall__)) xbox_RtlLeaveCriticalSection(void* CriticalSection);
+
     uint8_t __attribute__((__stdcall__)) xbox_RtlEqualString(
         const xbe::kernel::STRING* String1,
         const xbe::kernel::STRING* String2,

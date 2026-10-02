@@ -8,34 +8,31 @@ namespace xbe {
 namespace kernel {
 
 static uint8_t emergency_buffer[4096] __attribute__((aligned(4096)));
-
-extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(uint32_t NumberOfBytes) {
-    xbe::record_kernel_call(165);
-    
-    printf("[KERNEL] MmAllocateContiguousMemory cagrildi -> Boyut: %u bayt\n", NumberOfBytes);
-
-    if (NumberOfBytes == 0) {
-        return emergency_buffer;
-    }
-
-    void* ptr = nullptr;
-    if (posix_memalign(&ptr, 4096, NumberOfBytes) == 0) {
-        std::memset(ptr, 0, NumberOfBytes);
-    } else {
-        ptr = malloc(NumberOfBytes);
-        if (ptr) std::memset(ptr, 0, NumberOfBytes);
-        else ptr = emergency_buffer;
-    }
-    printf("[KERNEL] MmAllocateContiguousMemory -> Donen Ptr: %p\n", ptr);
-    return ptr;
-}
-
 extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* BaseAddress) {
     xbe::record_kernel_call(167); // Usually 166 or 167 depending on Ex vs normal.
     printf("[KERNEL] MmFreeContiguousMemory(BaseAddress: %p) cagrildi.\n", BaseAddress);
     if (BaseAddress && BaseAddress != emergency_buffer) {
         free(BaseAddress);
     }
+}
+
+
+extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(size_t NumberOfBytes) {
+    xbe::record_kernel_call(165);
+    printf("[KERNEL] MmAllocateContiguousMemory cagrildi -> Boyut: %zu (0x%zX) bayt\n", NumberOfBytes, NumberOfBytes);
+
+    if (NumberOfBytes == 0 || NumberOfBytes > 0x10000000) {
+        return nullptr;
+    }
+
+    void* ptr = nullptr;
+    if (posix_memalign(&ptr, 4096, NumberOfBytes) != 0) {
+        printf("[KERNEL] MmAllocateContiguousMemory basarisiz! (posix_memalign hatasi)\n");
+        return nullptr;
+    }
+
+    memset(ptr, 0, NumberOfBytes);
+    return ptr;
 }
 
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
@@ -45,7 +42,7 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
     uint32_t AllocationType,
     uint32_t Protect
 ) {
-    xbe::record_kernel_call(184); // Update stat
+    xbe::record_kernel_call(184);
     
     size_t size = RegionSize ? *RegionSize : 0;
     void* requested_base = BaseAddress ? *BaseAddress : nullptr;
@@ -54,6 +51,14 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
 
     if (size == 0) {
         printf("[KERNEL] NtAllocateVirtualMemory -> Sifir bayt istendi, STATUS_SUCCESS donuluyor.\n");
+        return 0; // STATUS_SUCCESS
+    }
+
+    
+    if (requested_base != nullptr) {
+        printf("[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: %p, MEM_COMMIT simule ediliyor.\n", requested_base);
+        if (BaseAddress) *BaseAddress = requested_base;
+        if (RegionSize) *RegionSize = size;
         return 0; // STATUS_SUCCESS
     }
 

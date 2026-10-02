@@ -10,7 +10,8 @@ namespace kernel {
 extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(uint32_t NumberOfBytes);
 extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* BaseAddress);
 
-extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
+extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(size_t NumberOfBytes);
+    extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
     void** BaseAddress,
     uint32_t ZeroBits,
     size_t* RegionSize,

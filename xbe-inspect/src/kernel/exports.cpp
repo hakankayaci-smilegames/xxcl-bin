@@ -7,6 +7,7 @@
 #include "io.hpp"
 #include "mm.hpp"
 #include "hal.hpp"
+#include "xe.hpp"
 #include <unordered_map>
 #include <cstdio>
 
@@ -24,6 +25,7 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {165, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
     {178, reinterpret_cast<void*>(&xbox_MmPersistContiguousMemory)},
     {184, reinterpret_cast<void*>(&xbox_NtAllocateVirtualMemory)},
+    {165, reinterpret_cast<void*>(&xbox_MmAllocateContiguousMemory)},
     {196, reinterpret_cast<void*>(&xbox_NtDeviceIoControlFile)},
     {199, reinterpret_cast<void*>(&xbox_NtFreeVirtualMemory)},
     {202, reinterpret_cast<void*>(&xbox_NtOpenFile)},
@@ -35,7 +37,9 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {236, reinterpret_cast<void*>(&xbox_NtWriteFile)},
     {219, reinterpret_cast<void*>(&xbox_NtReadFile)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
-    {277, reinterpret_cast<void*>(&xbox_RtlCompareMemory)},
+    {277, reinterpret_cast<void*>(&xbox_RtlEnterCriticalSection)},
+    {268, reinterpret_cast<void*>(&xbox_RtlCompareMemory)},
+    {294, reinterpret_cast<void*>(&xbox_RtlLeaveCriticalSection)},
     {279, reinterpret_cast<void*>(&xbox_RtlEqualString)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
     {291, reinterpret_cast<void*>(&xbox_RtlInitializeCriticalSection)},
@@ -44,6 +48,8 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {302, reinterpret_cast<void*>(&xbox_RtlRaiseException)}, // TODO: check if actually implemented
     {68, reinterpret_cast<void*>(&xbox_IoDeleteSymbolicLink)},
     {67, reinterpret_cast<void*>(&xbox_IoCreateSymbolicLink)},
+    {327, reinterpret_cast<void*>(&xbox_XeLoadSection)},
+    {328, reinterpret_cast<void*>(&xbox_XeUnloadSection)}
 };
 
 void* get_kernel_export(uint32_t ordinal) {

@@ -48,6 +48,17 @@ extern "C" void __attribute__((__stdcall__)) xbox_RtlRaiseException(void* Except
     printf("[KERNEL] RtlRaiseException(Record: %p) cagrildi. CRITICAL ERROR!\n", ExceptionRecord);
 }
 
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_RtlEnterCriticalSection(void* CriticalSection) {
+    xbe::record_kernel_call(277);
+    return 0;
+}
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_RtlLeaveCriticalSection(void* CriticalSection) {
+    xbe::record_kernel_call(294);
+    return 0;
+}
+
 extern "C" uint8_t __attribute__((__stdcall__)) xbox_RtlEqualString(
     const xbe::kernel::STRING* String1,
     const xbe::kernel::STRING* String2,
