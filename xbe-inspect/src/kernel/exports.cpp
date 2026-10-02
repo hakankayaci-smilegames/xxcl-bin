@@ -57,7 +57,8 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {327, reinterpret_cast<void*>(&xbox_XeLoadSection)},
     {328, reinterpret_cast<void*>(&xbox_XeUnloadSection)},
     {98, reinterpret_cast<void*>(&xbox_KeConnectInterrupt)},
-    {109, reinterpret_cast<void*>(&xbox_KeInitializeInterrupt)}
+    {109, reinterpret_cast<void*>(&xbox_KeInitializeInterrupt)},
+    {168, reinterpret_cast<void*>(&xbox_MmClaimGpuInstanceMemory)}
 };
 
 void* get_kernel_export(uint32_t ordinal) {

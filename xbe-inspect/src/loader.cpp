@@ -42,6 +42,49 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
     uintptr_t eip = context->uc_mcontext.gregs[REG_EIP];
     uintptr_t fault_addr = reinterpret_cast<uintptr_t>(info->si_addr);
 
+    // Donanim IO Port erisimi (IN/OUT) simulasyonu
+    uint8_t* insn = reinterpret_cast<uint8_t*>(eip);
+    if (insn) {
+        if (insn[0] == 0xEE) { // OUT DX, AL
+            uint16_t port = context->uc_mcontext.gregs[REG_EDX] & 0xFFFF;
+            uint8_t val = context->uc_mcontext.gregs[REG_EAX] & 0xFF;
+            printf("[IO EMULATION] OUT DX, AL -> Port: 0x%04X, Val: 0x%02X\n", port, val);
+            context->uc_mcontext.gregs[REG_EIP] += 1; // Advance EIP by 1 byte
+            return;
+        } else if (insn[0] == 0xEF) { // OUT DX, EAX
+            uint16_t port = context->uc_mcontext.gregs[REG_EDX] & 0xFFFF;
+            uint32_t val = context->uc_mcontext.gregs[REG_EAX];
+            printf("[IO EMULATION] OUT DX, EAX -> Port: 0x%04X, Val: 0x%08X\n", port, val);
+            context->uc_mcontext.gregs[REG_EIP] += 1;
+            return;
+        } else if (insn[0] == 0xEC) { // IN AL, DX
+            uint16_t port = context->uc_mcontext.gregs[REG_EDX] & 0xFFFF;
+            printf("[IO EMULATION] IN AL, DX -> Port: 0x%04X\n", port);
+            context->uc_mcontext.gregs[REG_EAX] = (context->uc_mcontext.gregs[REG_EAX] & 0xFFFFFF00) | 0x00; // Mock 0
+            context->uc_mcontext.gregs[REG_EIP] += 1;
+            return;
+        } else if (insn[0] == 0xED) { // IN EAX, DX
+            uint16_t port = context->uc_mcontext.gregs[REG_EDX] & 0xFFFF;
+            printf("[IO EMULATION] IN EAX, DX -> Port: 0x%04X\n", port);
+            context->uc_mcontext.gregs[REG_EAX] = 0x00000000; // Mock 0
+            context->uc_mcontext.gregs[REG_EIP] += 1;
+            return;
+        } else if (insn[0] == 0xE6) { // OUT imm8, AL
+            uint8_t port = insn[1];
+            uint8_t val = context->uc_mcontext.gregs[REG_EAX] & 0xFF;
+            printf("[IO EMULATION] OUT imm8, AL -> Port: 0x%02X, Val: 0x%02X\n", port, val);
+            context->uc_mcontext.gregs[REG_EIP] += 2;
+            return;
+        } else if (insn[0] == 0xE4) { // IN AL, imm8
+            uint8_t port = insn[1];
+            printf("[IO EMULATION] IN AL, imm8 -> Port: 0x%02X\n", port);
+            context->uc_mcontext.gregs[REG_EAX] = (context->uc_mcontext.gregs[REG_EAX] & 0xFFFFFF00) | 0x00;
+            context->uc_mcontext.gregs[REG_EIP] += 2;
+            return;
+        }
+    }
+
+
     printf("\n\033[1;31m[CRASH]\033[0m SIGSEGV yakalandi!\n");
     printf("Crash Adresi (Fault): 0x%08X\n", fault_addr);
     printf("Instruction Pointer (EIP): 0x%08X\n", eip);

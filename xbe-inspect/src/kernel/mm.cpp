@@ -18,6 +18,29 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* B
 
 
 
+
+extern "C" void* __attribute__((__stdcall__)) xbox_MmClaimGpuInstanceMemory(
+    size_t NumberOfBytes,
+    uint32_t* AllocationType
+) {
+    xbe::record_kernel_call(168);
+    if (NumberOfBytes == 0) return nullptr;
+
+    void* ptr = nullptr;
+    int res = posix_memalign(&ptr, 4096, NumberOfBytes);
+    if (res != 0 || !ptr) {
+        printf("[KERNEL] MmClaimGpuInstanceMemory -> posix_memalign basarisiz! (Boyut: %zu)\n", NumberOfBytes);
+        return nullptr;
+    }
+
+    memset(ptr, 0, NumberOfBytes);
+
+    printf("[KERNEL] MmClaimGpuInstanceMemory -> Boyut: %zu bayt, AllocType: %p => Donen Ptr: %p\n",
+           NumberOfBytes, AllocationType, ptr);
+
+    return ptr;
+}
+
 extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
     size_t NumberOfBytes,
     uint32_t LowestAcceptableAddress,
