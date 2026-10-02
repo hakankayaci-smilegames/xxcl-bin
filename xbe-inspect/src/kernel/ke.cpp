@@ -33,8 +33,8 @@ extern "C" int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int
 }
 
 extern "C" void __attribute__((__stdcall__)) xbox_KeInitializeInterrupt(
-    void* Interrupt, void* ServiceRoutine, void* ServiceContext, void* SpinLock, 
-    uint32_t Vector, uint8_t Irql, uint8_t SynchronizeIrql, uint32_t InterruptMode, uint8_t ShareVector
+    void* Interrupt, void* ServiceRoutine, void* ServiceContext, 
+    uint32_t Vector, uint8_t Irql, uint32_t InterruptMode, uint8_t ShareVector
 ) {
     printf("[KERNEL] KeInitializeInterrupt(Interrupt: %p, Routine: %p, Vector: 0x%X) cagrildi.\n", Interrupt, ServiceRoutine, Vector);
     if (Interrupt) {
