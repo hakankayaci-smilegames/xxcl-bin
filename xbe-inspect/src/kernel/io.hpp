@@ -5,23 +5,17 @@
 typedef int32_t NTSTATUS;
 
 #pragma pack(push, 1)
-struct XBOX_OBJECT_ATTRIBUTES {
-    void* RootDirectory;
-    xbe::kernel::STRING* ObjectName;
-    uint32_t Attributes;
-};
-#pragma pack(pop)
 
 namespace xbe {
 namespace kernel {
 
 extern "C" {
-    NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(uint32_t Handle);
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(void* Handle);
     
     NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
         void** FileHandle,
         uint32_t DesiredAccess,
-        XBOX_OBJECT_ATTRIBUTES* ObjectAttributes,
+        OBJECT_ATTRIBUTES* ObjectAttributes,
         void* IoStatusBlock,
         uint32_t ShareAccess,
         uint32_t OpenOptions
@@ -55,6 +49,31 @@ extern "C" {
         void* FsInformation,
         uint32_t Length,
         uint32_t FsInformationClass
+    );
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtCreateFile(
+        void** FileHandle,
+        uint32_t DesiredAccess,
+        OBJECT_ATTRIBUTES* ObjectAttributes,
+        IO_STATUS_BLOCK* IoStatusBlock,
+        int64_t* AllocationSize,
+        uint32_t FileAttributes,
+        uint32_t ShareAccess,
+        uint32_t CreateDisposition,
+        uint32_t CreateOptions,
+        void* EaBuffer,
+        uint32_t EaLength
+    );
+
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtReadFile(
+        void* FileHandle,
+        void* Event,
+        void* ApcRoutine,
+        void* ApcContext,
+        IO_STATUS_BLOCK* IoStatusBlock,
+        void* Buffer,
+        uint32_t Length,
+        int64_t* ByteOffset,
+        uint32_t* Key
     );
 }
 

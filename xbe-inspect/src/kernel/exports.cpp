@@ -29,6 +29,8 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {218, reinterpret_cast<void*>(&xbox_NtQueryVolumeInformationFile)},
     {186, reinterpret_cast<void*>(&xbox_MmFreeContiguousMemory)},
     {187, reinterpret_cast<void*>(&xbox_NtClose)},
+    {190, reinterpret_cast<void*>(&xbox_NtCreateFile)},
+    {219, reinterpret_cast<void*>(&xbox_NtReadFile)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
     {291, reinterpret_cast<void*>(&xbox_RtlInitializeCriticalSection)},

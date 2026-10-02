@@ -6,15 +6,20 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <map>
+#include <cerrno>
 
 namespace xbe {
 namespace kernel {
 
-extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(uint32_t Handle) {
+static std::map<void*, int> g_handle_to_fd;
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(void* Handle) {
     xbe::record_kernel_call(187);
-    printf("[KERNEL] NtClose(Handle: 0x%08X) cagrildi.\n", Handle);
-    if (Handle != 0x8899AABB && Handle < 0x10000) {
-        close((int)Handle);
+    printf("[KERNEL] NtClose(Handle: %p) cagrildi.\n", Handle);
+    if (g_handle_to_fd.count(Handle)) {
+        close(g_handle_to_fd[Handle]);
+        g_handle_to_fd.erase(Handle);
     }
     return 0; // STATUS_SUCCESS
 }
@@ -22,7 +27,7 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(uint32_t Handle) {
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
     void** FileHandle,
     uint32_t DesiredAccess,
-    XBOX_OBJECT_ATTRIBUTES* ObjectAttributes,
+    OBJECT_ATTRIBUTES* ObjectAttributes,
     void* IoStatusBlock,
     uint32_t ShareAccess,
     uint32_t OpenOptions
@@ -49,7 +54,9 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
         }
         
         if (fd >= 0) {
-            *FileHandle = (void*)(intptr_t)fd;
+            void* handle_val = (void*)(uintptr_t)(fd + 0x10000);
+            *FileHandle = handle_val;
+            g_handle_to_fd[handle_val] = fd;
         } else {
             *FileHandle = (void*)0x8899AABB;
         }
@@ -177,11 +184,131 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryVolumeInformationFi
     return 0; // STATUS_SUCCESS
 }
 
-} // namespace kernel
-} // namespace xbe
 
-namespace xbe {
-namespace kernel {
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtCreateFile(
+    void** FileHandle,
+    uint32_t DesiredAccess,
+    OBJECT_ATTRIBUTES* ObjectAttributes,
+    IO_STATUS_BLOCK* IoStatusBlock,
+    int64_t* AllocationSize,
+    uint32_t FileAttributes,
+    uint32_t ShareAccess,
+    uint32_t CreateDisposition,
+    uint32_t CreateOptions,
+    void* EaBuffer,
+    uint32_t EaLength
+) {
+    xbe::record_kernel_call(190);
+    if (!FileHandle || !ObjectAttributes || !ObjectAttributes->ObjectName || !ObjectAttributes->ObjectName->Buffer) {
+        if (IoStatusBlock) IoStatusBlock->Status = 0xC000000D; // STATUS_INVALID_PARAMETER
+        return 0xC000000D;
+    }
+
+    std::string xbox_path(ObjectAttributes->ObjectName->Buffer, ObjectAttributes->ObjectName->Length);
+    printf("[KERNEL] NtCreateFile -> Xbox Yolu: '%s', Disposition: 0x%X\n", xbox_path.c_str(), CreateDisposition);
+
+    std::string linux_path = vfs_translate_path(xbox_path);
+    printf("[KERNEL] NtCreateFile -> Linux Yolu: '%s'\n", linux_path.c_str());
+
+    // POSIX open() bayraklarini hazirla
+        // Dizin olusturma kontrolu
+    if (CreateOptions & 1) { // FILE_DIRECTORY_FILE = 1
+        if (CreateDisposition == 1 || CreateDisposition == 3) {
+            mkdir(linux_path.c_str(), 0777);
+            // Dizinleri acmak icin O_RDONLY kullanilir
+            int fd = open(linux_path.c_str(), O_RDONLY | O_DIRECTORY);
+            if (fd >= 0) {
+                void* handle_val = (void*)(uintptr_t)(fd + 0x10000);
+                *FileHandle = handle_val;
+                g_handle_to_fd[handle_val] = fd;
+                if (IoStatusBlock) { IoStatusBlock->Status = 0; IoStatusBlock->Information = 1; }
+                printf("[KERNEL] NtCreateFile -> DIRECTORY BASARILI! Handle: %p (FD: %d)\n", *FileHandle, fd);
+                return 0;
+            }
+        }
+    }
+
+    int flags = O_RDONLY;
+    if ((DesiredAccess & 0x40000000) || (DesiredAccess & 0x80000000) || (DesiredAccess & 0x00100000) || (DesiredAccess & 0x02000000)) { 
+        if (CreateDisposition == 1) flags = O_RDWR;
+        else if (CreateDisposition == 2) flags = O_RDWR | O_CREAT | O_EXCL;
+        else if (CreateDisposition == 3) flags = O_RDWR | O_CREAT;
+        else if (CreateDisposition == 4) flags = O_RDWR | O_CREAT;
+        else if (CreateDisposition == 5) flags = O_RDWR | O_CREAT | O_TRUNC;
+    }
+
+    int fd = open(linux_path.c_str(), flags, 0666);
+    if (fd < 0 && flags != O_RDONLY) {
+        // Fallback for directories or read-only files
+        fd = open(linux_path.c_str(), O_RDONLY);
+    }
+
+    if (fd < 0) {
+        printf("[KERNEL] NtCreateFile -> Dosya acilamadi! (Hata: %s)\n", strerror(errno));
+        if (IoStatusBlock) {
+            IoStatusBlock->Status = 0xC0000034; // STATUS_OBJECT_NAME_NOT_FOUND
+            IoStatusBlock->Information = 0;
+        }
+        return 0xC0000034;
+    }
+
+    void* handle_val = (void*)(uintptr_t)(fd + 0x10000);
+    *FileHandle = handle_val;
+    g_handle_to_fd[handle_val] = fd;
+
+    if (IoStatusBlock) {
+        IoStatusBlock->Status = 0; // STATUS_SUCCESS
+        IoStatusBlock->Information = 1; // FILE_OPENED
+    }
+
+    printf("[KERNEL] NtCreateFile -> BASARILI! Handle: %p (FD: %d)\n", *FileHandle, fd);
+    return 0; // STATUS_SUCCESS
+}
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtReadFile(
+    void* FileHandle,
+    void* Event,
+    void* ApcRoutine,
+    void* ApcContext,
+    IO_STATUS_BLOCK* IoStatusBlock,
+    void* Buffer,
+    uint32_t Length,
+    int64_t* ByteOffset,
+    uint32_t* Key
+) {
+    xbe::record_kernel_call(219);
+    printf("[KERNEL] NtReadFile -> Handle: %p, Length: %u\n", FileHandle, Length);
+
+    if (!g_handle_to_fd.count(FileHandle)) {
+        printf("[KERNEL] NtReadFile -> Gecersiz handle!\n");
+        return 0xC0000008; // STATUS_INVALID_HANDLE
+    }
+
+    int fd = g_handle_to_fd[FileHandle];
+    ssize_t bytes_read = -1;
+
+    if (ByteOffset) {
+        bytes_read = pread(fd, Buffer, Length, *ByteOffset);
+    } else {
+        bytes_read = read(fd, Buffer, Length);
+    }
+
+    if (bytes_read < 0) {
+        printf("[KERNEL] NtReadFile -> Okuma basarisiz! (Hata: %s)\n", strerror(errno));
+        if (IoStatusBlock) {
+            IoStatusBlock->Status = 0xC0000034;
+            IoStatusBlock->Information = 0;
+        }
+        return 0xC0000034;
+    }
+
+    if (IoStatusBlock) {
+        IoStatusBlock->Status = 0;
+        IoStatusBlock->Information = bytes_read;
+    }
+    return 0;
+}
+
 
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_IoCreateSymbolicLink(
     xbe::kernel::STRING* SymbolicLinkName,
