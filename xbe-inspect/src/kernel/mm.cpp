@@ -17,6 +17,37 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* B
 }
 
 
+
+extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
+    size_t NumberOfBytes,
+    uint32_t LowestAcceptableAddress,
+    uint32_t HighestAcceptableAddress,
+    uint32_t Alignment,
+    uint32_t ProtectionType
+) {
+    xbe::record_kernel_call(166);
+    if (NumberOfBytes == 0) return nullptr;
+
+    size_t align = (Alignment > 4096) ? Alignment : 4096;
+    if ((align & (align - 1)) != 0) {
+        align = 4096;
+    }
+
+    void* ptr = nullptr;
+    int res = posix_memalign(&ptr, align, NumberOfBytes);
+    if (res != 0 || !ptr) {
+        printf("[KERNEL] MmAllocateContiguousMemoryEx -> posix_memalign basarisiz oldu! (Hata: %d)\n", res);
+        return nullptr;
+    }
+
+    memset(ptr, 0, NumberOfBytes);
+
+    printf("[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: %zu (0x%zX), Align: 0x%X, Protect: 0x%X => Ptr: %p\n",
+           NumberOfBytes, NumberOfBytes, Alignment, ProtectionType, ptr);
+
+    return ptr;
+}
+
 extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(size_t NumberOfBytes) {
     xbe::record_kernel_call(165);
     printf("[KERNEL] MmAllocateContiguousMemory cagrildi -> Boyut: %zu (0x%zX) bayt\n", NumberOfBytes, NumberOfBytes);

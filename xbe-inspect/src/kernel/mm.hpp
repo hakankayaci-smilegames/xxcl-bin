@@ -11,6 +11,15 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(ui
 extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* BaseAddress);
 
 extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(size_t NumberOfBytes);
+
+    extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
+        size_t NumberOfBytes,
+        uint32_t LowestAcceptableAddress,
+        uint32_t HighestAcceptableAddress,
+        uint32_t Alignment,
+        uint32_t ProtectionType
+    );
+
     extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtAllocateVirtualMemory(
     void** BaseAddress,
     uint32_t ZeroBits,

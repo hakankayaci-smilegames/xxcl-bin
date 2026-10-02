@@ -1,4 +1,6 @@
 #include "loader.hpp"
+#include "kernel/nv2a.hpp"
+#include "video/window.hpp"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -110,7 +112,13 @@ int main(int argc, char* argv[]) {
 
     if (run_mode) {
         std::cout << YELLOW << "\n[Baslatiliyor...]" << RESET << "\n";
+        xbe::kernel::nv2a_init_mmio();
+        xbe::video::video_init_window(640, 480);
         xbe::load_and_run(res, filepath);
+        while(true) {
+            xbe::video::video_poll_events();
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        }
     }
     return 0;
 }

@@ -9,8 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -m32")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
 
-# Gecici olarak 32-bit test icin SDL2 kaldirildi
-# (lib32-sdl2 AUR'da oldugu icin hizli test amaciyla)
 
-file(GLOB SOURCES "src/main.cpp" "src/xbe.cpp" "src/loader.cpp" "src/kernel.cpp" "src/kernel/*.cpp")
+file(GLOB SOURCES "src/main.cpp" "src/xbe.cpp" "src/loader.cpp" "src/kernel.cpp" "src/kernel/*.cpp" "src/video/*.cpp")
 add_executable(xbe-inspect ${SOURCES})
+target_link_libraries(xbe-inspect PRIVATE SDL2)
