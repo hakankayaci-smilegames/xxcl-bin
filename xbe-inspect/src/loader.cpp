@@ -42,10 +42,19 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
     uintptr_t eip = context->uc_mcontext.gregs[REG_EIP];
     uintptr_t fault_addr = reinterpret_cast<uintptr_t>(info->si_addr);
 
-    // Donanim IO Port erisimi (IN/OUT) simulasyonu
+
+    // Donanim IO Port erisimi (IN/OUT) ve Privileged Command (WBINVD) simulasyonu
     uint8_t* insn = reinterpret_cast<uint8_t*>(eip);
     if (insn) {
-        if (insn[0] == 0xEE) { // OUT DX, AL
+        if (insn[0] == 0x0F && insn[1] == 0x09) { // WBINVD
+            // printf("[CPU EMULATION] WBINVD privileged instruction bypassed (NOP)\n");
+            context->uc_mcontext.gregs[REG_EIP] += 2;
+            return;
+        } else if (insn[0] == 0x0F && insn[1] == 0x08) { // INVD
+            // printf("[CPU EMULATION] INVD privileged instruction bypassed (NOP)\n");
+            context->uc_mcontext.gregs[REG_EIP] += 2;
+            return;
+        } else if (insn[0] == 0xEE) { // OUT DX, AL
             uint16_t port = context->uc_mcontext.gregs[REG_EDX] & 0xFFFF;
             uint8_t val = context->uc_mcontext.gregs[REG_EAX] & 0xFF;
             printf("[IO EMULATION] OUT DX, AL -> Port: 0x%04X, Val: 0x%02X\n", port, val);
