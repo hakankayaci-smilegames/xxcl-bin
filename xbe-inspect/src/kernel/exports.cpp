@@ -32,6 +32,8 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {190, reinterpret_cast<void*>(&xbox_NtCreateFile)},
     {219, reinterpret_cast<void*>(&xbox_NtReadFile)},
     {255, reinterpret_cast<void*>(&xbox_PsCreateSystemThreadEx)},
+    {277, reinterpret_cast<void*>(&xbox_RtlCompareMemory)},
+    {279, reinterpret_cast<void*>(&xbox_RtlEqualString)},
     {289, reinterpret_cast<void*>(&xbox_RtlInitAnsiString)},
     {291, reinterpret_cast<void*>(&xbox_RtlInitializeCriticalSection)},
     {300, reinterpret_cast<void*>(&xbox_RtlMultiByteToUnicodeSize)}, // TODO: check if actually implemented

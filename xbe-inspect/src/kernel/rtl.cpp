@@ -1,4 +1,6 @@
 #include "rtl.hpp"
+#include <strings.h>
+#include <cstring>
 #include "../kernel.hpp"
 #include <cstring>
 #include <cstdio>
@@ -44,6 +46,36 @@ extern "C" uint32_t __attribute__((__stdcall__)) xbox_RtlNtStatusToDosError(NTST
 extern "C" void __attribute__((__stdcall__)) xbox_RtlRaiseException(void* ExceptionRecord) {
     xbe::record_kernel_call(302);
     printf("[KERNEL] RtlRaiseException(Record: %p) cagrildi. CRITICAL ERROR!\n", ExceptionRecord);
+}
+
+extern "C" uint8_t __attribute__((__stdcall__)) xbox_RtlEqualString(
+    const xbe::kernel::STRING* String1,
+    const xbe::kernel::STRING* String2,
+    uint8_t CaseInSensitive
+) {
+    xbe::record_kernel_call(279);
+    if (!String1 || !String2) return 0;
+    if (String1->Length != String2->Length) return 0;
+    if (!String1->Buffer || !String2->Buffer) return 0;
+
+    int match = 0;
+    if (CaseInSensitive) {
+        match = (strncasecmp(String1->Buffer, String2->Buffer, String1->Length) == 0);
+    } else {
+        match = (strncmp(String1->Buffer, String2->Buffer, String1->Length) == 0);
+    }
+    return match ? 1 : 0;
+}
+
+extern "C" size_t __attribute__((__stdcall__)) xbox_RtlCompareMemory(const void* Source1, const void* Source2, size_t Length) {
+    xbe::record_kernel_call(277);
+    const uint8_t* p1 = (const uint8_t*)Source1;
+    const uint8_t* p2 = (const uint8_t*)Source2;
+    size_t i = 0;
+    for (; i < Length; i++) {
+        if (p1[i] != p2[i]) break;
+    }
+    return i;
 }
 
 } // namespace kernel
