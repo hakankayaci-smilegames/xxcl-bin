@@ -13,6 +13,7 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* B
 extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(size_t NumberOfBytes);
 
     extern "C" extern "C" void* __attribute__((__stdcall__)) xbox_MmClaimGpuInstanceMemory(size_t NumberOfBytes, uint32_t* AllocationType);
+    extern "C" void mm_init_physical_memory_mirrors();
     extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
         size_t NumberOfBytes,
         uint32_t LowestAcceptableAddress,

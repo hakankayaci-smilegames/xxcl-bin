@@ -1,11 +1,34 @@
 #include "mm.hpp"
 #include "../kernel.hpp"
 #include <cstdlib>
+#include <sys/mman.h>
+#include <cerrno>
 #include <cstring>
 #include <cstdio>
 
 namespace xbe {
 namespace kernel {
+
+void mm_init_physical_memory_mirrors() {
+    void* kseg0 = mmap((void*)0x80000000, 0x04000000, 
+                       PROT_READ | PROT_WRITE, 
+                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (kseg0 == MAP_FAILED) {
+        printf("[MM] KSEG0 (0x80000000 - 64MB) mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
+    } else {
+        printf("[MM] KSEG0 (0x80000000 - 64MB) fiziksel bellek aynasi basariyla eslendi.\n");
+    }
+
+    void* kseg1 = mmap((void*)0xA0000000, 0x04000000, 
+                       PROT_READ | PROT_WRITE, 
+                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    if (kseg1 == MAP_FAILED) {
+        printf("[MM] KSEG1 (0xA0000000 - 64MB) mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
+    } else {
+        printf("[MM] KSEG1 (0xA0000000 - 64MB) fiziksel bellek aynasi basariyla eslendi.\n");
+    }
+}
+
 
 static uint8_t emergency_buffer[4096] __attribute__((aligned(4096)));
 extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* BaseAddress) {

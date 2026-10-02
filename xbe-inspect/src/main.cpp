@@ -1,4 +1,5 @@
 #include "loader.hpp"
+#include "kernel/mm.hpp"
 #include "kernel/nv2a.hpp"
 #include "video/window.hpp"
 #include <iostream>
@@ -112,6 +113,7 @@ int main(int argc, char* argv[]) {
 
     if (run_mode) {
         std::cout << YELLOW << "\n[Baslatiliyor...]" << RESET << "\n";
+        xbe::kernel::mm_init_physical_memory_mirrors();
         xbe::kernel::nv2a_init_mmio();
         xbe::video::video_init_window(640, 480);
         xbe::load_and_run(res, filepath);
