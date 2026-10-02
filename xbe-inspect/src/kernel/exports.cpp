@@ -16,7 +16,8 @@ namespace kernel {
 
 static std::unordered_map<uint32_t, void*> kernel_exports = {
     {24,  reinterpret_cast<void*>(&xbox_ExQueryNonVolatileSetting)},
-    {49,  reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
+    {44, reinterpret_cast<void*>(&xbox_HalGetInterruptVector)},
+    {49, reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
     {107, reinterpret_cast<void*>(&xbox_KeInitializeDpc)},
     {113, reinterpret_cast<void*>(&xbox_KeInitializeTimerEx)},
     {130, reinterpret_cast<void*>(&xbox_KeSetEvent)},
@@ -53,7 +54,9 @@ static std::unordered_map<uint32_t, void*> kernel_exports = {
     {68, reinterpret_cast<void*>(&xbox_IoDeleteSymbolicLink)},
     {67, reinterpret_cast<void*>(&xbox_IoCreateSymbolicLink)},
     {327, reinterpret_cast<void*>(&xbox_XeLoadSection)},
-    {328, reinterpret_cast<void*>(&xbox_XeUnloadSection)}
+    {328, reinterpret_cast<void*>(&xbox_XeUnloadSection)},
+    {98, reinterpret_cast<void*>(&xbox_KeConnectInterrupt)},
+    {109, reinterpret_cast<void*>(&xbox_KeInitializeInterrupt)}
 };
 
 void* get_kernel_export(uint32_t ordinal) {

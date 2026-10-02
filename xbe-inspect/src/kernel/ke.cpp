@@ -31,3 +31,18 @@ extern "C" int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int
     printf("[KERNEL] KeSetEvent(Event: %p, Increment: %d, Wait: %u) cagrildi.\n", Event, Increment, Wait);
     return 0;
 }
+
+extern "C" void __attribute__((__stdcall__)) xbox_KeInitializeInterrupt(
+    void* Interrupt, void* ServiceRoutine, void* ServiceContext, void* SpinLock, 
+    uint32_t Vector, uint8_t Irql, uint8_t SynchronizeIrql, uint32_t InterruptMode, uint8_t ShareVector
+) {
+    printf("[KERNEL] KeInitializeInterrupt(Interrupt: %p, Routine: %p, Vector: 0x%X) cagrildi.\n", Interrupt, ServiceRoutine, Vector);
+    if (Interrupt) {
+        memset(Interrupt, 0, 0x40); // Dummy KINTERRUPT
+    }
+}
+
+extern "C" uint8_t __attribute__((__stdcall__)) xbox_KeConnectInterrupt(void* Interrupt) {
+    printf("[KERNEL] KeConnectInterrupt(Interrupt: %p) cagrildi.\n", Interrupt);
+    return 1; // TRUE (Basarili)
+}

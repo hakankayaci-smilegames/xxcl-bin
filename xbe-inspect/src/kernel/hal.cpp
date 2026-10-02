@@ -6,6 +6,24 @@
 namespace xbe {
 namespace kernel {
 
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_HalGetInterruptVector(
+    uint32_t BusInterruptLevel,
+    uint8_t* Irql
+) {
+    xbe::record_kernel_call(44);
+    uint32_t vector = 0x30 + BusInterruptLevel;
+
+    if (Irql) {
+        *Irql = (uint8_t)(0x18);
+    }
+
+    printf("[KERNEL] HalGetInterruptVector -> IRQ: %u => Vector: 0x%02X, Irql: %u\n",
+           BusInterruptLevel, vector, Irql ? *Irql : 0);
+
+    return vector;
+}
+
 extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t Routine) {
     xbe::record_kernel_call(49);
     printf("[KERNEL] HalReturnToFirmware(Routine: %u) cagrildi. Oyun kapaniyor/reboot ediliyor!\n", Routine);
