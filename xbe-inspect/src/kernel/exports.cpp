@@ -17,6 +17,7 @@ namespace kernel {
 static std::unordered_map<uint32_t, void*> kernel_exports = {
     {24,  reinterpret_cast<void*>(&xbox_ExQueryNonVolatileSetting)},
     {44, reinterpret_cast<void*>(&xbox_HalGetInterruptVector)},
+    {47, reinterpret_cast<void*>(&xbox_HalRegisterShutdownNotification)},
     {49, reinterpret_cast<void*>(&xbox_HalReturnToFirmware)},
     {107, reinterpret_cast<void*>(&xbox_KeInitializeDpc)},
     {113, reinterpret_cast<void*>(&xbox_KeInitializeTimerEx)},

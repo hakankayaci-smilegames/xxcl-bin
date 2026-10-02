@@ -24,6 +24,16 @@ extern "C" uint32_t __attribute__((__stdcall__)) xbox_HalGetInterruptVector(
     return vector;
 }
 
+
+extern "C" void __attribute__((__stdcall__)) xbox_HalRegisterShutdownNotification(
+    void* ShutdownRegistration,
+    uint8_t Register
+) {
+    xbe::record_kernel_call(47);
+    printf("[KERNEL] HalRegisterShutdownNotification -> RegPtr: %p, State: %u\n",
+           ShutdownRegistration, Register);
+}
+
 extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t Routine) {
     xbe::record_kernel_call(49);
     printf("[KERNEL] HalReturnToFirmware(Routine: %u) cagrildi. Oyun kapaniyor/reboot ediliyor!\n", Routine);
