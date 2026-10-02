@@ -75,6 +75,27 @@ extern "C" {
         int64_t* ByteOffset,
         uint32_t* Key
     );
+
+    
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryInformationFile(
+        void* FileHandle,
+        IO_STATUS_BLOCK* IoStatusBlock,
+        void* FileInformation,
+        uint32_t Length,
+        uint32_t FileInformationClass
+    );
+
+    NTSTATUS __attribute__((__stdcall__)) xbox_NtWriteFile(
+        void* FileHandle,
+        void* Event,
+        void* ApcRoutine,
+        void* ApcContext,
+        IO_STATUS_BLOCK* IoStatusBlock,
+        void* Buffer,
+        uint32_t Length,
+        int64_t* ByteOffset,
+        uint32_t* Key
+    );
 }
 
 } // namespace kernel

@@ -345,5 +345,145 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_IoDeleteSymbolicLink(
     return 0; // STATUS_SUCCESS
 }
 
+
+extern "C" int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int32_t Increment, uint8_t Wait);
+
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryInformationFile(
+    void* FileHandle,
+    IO_STATUS_BLOCK* IoStatusBlock,
+    void* FileInformation,
+    uint32_t Length,
+    uint32_t FileInformationClass
+) {
+    xbe::record_kernel_call(211);
+    printf("[KERNEL] NtQueryInformationFile(Handle: %p, Class: %u, Length: %u) cagrildi.\n", FileHandle, FileInformationClass, Length);
+
+    if (!g_handle_to_fd.count(FileHandle)) {
+        if (IoStatusBlock) IoStatusBlock->Status = 0xC0000008;
+        return 0xC0000008; // STATUS_INVALID_HANDLE
+    }
+    
+    int fd = g_handle_to_fd[FileHandle];
+
+    if (FileInformation && Length > 0) {
+        memset(FileInformation, 0, Length);
+        
+        if (FileInformationClass == 0x22) { // FileStandardInformation (34) OR maybe FileNetworkOpenInformation? 0x22 is FileNetworkOpenInformation on Windows (34)
+            // Wait, FileStandardInformation is 5.
+            // On Windows NT, 34 is FileNetworkOpenInformation.
+            // Structure: 
+            // LARGE_INTEGER CreationTime;
+            // LARGE_INTEGER LastAccessTime;
+            // LARGE_INTEGER LastWriteTime;
+            // LARGE_INTEGER ChangeTime;
+            // LARGE_INTEGER AllocationSize;
+            // LARGE_INTEGER EndOfFile;
+            // ULONG FileAttributes;
+            // ULONG Unknown; // padding
+            // Size is 56 bytes (0x38).
+            // Matches length exactly!
+            
+            uint64_t* times = (uint64_t*)FileInformation;
+            times[0] = 0; // Creation
+            times[1] = 0; // LastAccess
+            times[2] = 0; // LastWrite
+            times[3] = 0; // Change
+            
+            off_t current_pos = lseek(fd, 0, SEEK_CUR);
+            off_t file_size = lseek(fd, 0, SEEK_END);
+            lseek(fd, current_pos, SEEK_SET);
+            
+            times[4] = (file_size + 511) & ~511; // AllocationSize
+            times[5] = file_size; // EndOfFile
+            uint32_t* attrs = (uint32_t*)(&times[6]);
+            attrs[0] = 0x80; // FILE_ATTRIBUTE_NORMAL
+            
+            if (IoStatusBlock) IoStatusBlock->Information = 56;
+        } else if (FileInformationClass == 5) { // FileStandardInformation
+            struct FILE_STANDARD_INFORMATION {
+                uint64_t AllocationSize;
+                uint64_t EndOfFile;
+                uint32_t NumberOfLinks;
+                uint8_t DeletePending;
+                uint8_t Directory;
+                uint8_t Reserved[2];
+            };
+            if (Length >= sizeof(FILE_STANDARD_INFORMATION)) {
+                auto* info = (FILE_STANDARD_INFORMATION*)FileInformation;
+                off_t current_pos = lseek(fd, 0, SEEK_CUR);
+                off_t file_size = lseek(fd, 0, SEEK_END);
+                lseek(fd, current_pos, SEEK_SET);
+                
+                info->AllocationSize = (file_size + 511) & ~511;
+                info->EndOfFile = file_size;
+                info->NumberOfLinks = 1;
+                info->DeletePending = 0;
+                info->Directory = 0;
+                if (IoStatusBlock) IoStatusBlock->Information = sizeof(FILE_STANDARD_INFORMATION);
+            }
+        }
+    }
+
+    if (IoStatusBlock) IoStatusBlock->Status = 0;
+    return 0; // STATUS_SUCCESS
+}
+
+extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtWriteFile(
+    void* FileHandle,
+    void* Event,
+    void* ApcRoutine,
+    void* ApcContext,
+    IO_STATUS_BLOCK* IoStatusBlock,
+    void* Buffer,
+    uint32_t Length,
+    int64_t* ByteOffset,
+    uint32_t* Key
+) {
+    xbe::record_kernel_call(236);
+    if (!FileHandle || !Buffer) {
+        if (IoStatusBlock) IoStatusBlock->Status = 0xC000000D; // STATUS_INVALID_PARAMETER
+        return 0xC000000D;
+    }
+
+    auto it = g_handle_to_fd.find(FileHandle);
+    if (it == g_handle_to_fd.end()) {
+        printf("[KERNEL] NtWriteFile -> Gecersiz Handle: %p\n", FileHandle);
+        if (IoStatusBlock) IoStatusBlock->Status = 0xC0000008; // STATUS_INVALID_HANDLE
+        return 0xC0000008;
+    }
+    int fd = it->second;
+
+    ssize_t bytes_written = 0;
+    if (ByteOffset && *ByteOffset >= 0) {
+        bytes_written = pwrite(fd, Buffer, Length, (off_t)*ByteOffset);
+    } else {
+        bytes_written = write(fd, Buffer, Length);
+    }
+
+    if (bytes_written < 0) {
+        printf("[KERNEL] NtWriteFile -> Yazma hatasi: %s (FD: %d)\n", strerror(errno), fd);
+        if (IoStatusBlock) {
+            IoStatusBlock->Status = 0xC0000001; // STATUS_UNSUCCESSFUL
+            IoStatusBlock->Information = 0;
+        }
+        return 0xC0000001;
+    }
+
+    if (IoStatusBlock) {
+        IoStatusBlock->Status = 0; // STATUS_SUCCESS
+        IoStatusBlock->Information = (uintptr_t)bytes_written;
+    }
+
+    if (Event) {
+        xbox_KeSetEvent(Event, 0, 0);
+    }
+
+    printf("[KERNEL] NtWriteFile -> Handle: %p (FD: %d), Boyut: %u, Yazilan: %zd bayt\n",
+           FileHandle, fd, Length, bytes_written);
+
+    return 0; // STATUS_SUCCESS
+}
+
 } // namespace kernel
 } // namespace xbe

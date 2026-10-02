@@ -26,3 +26,8 @@ extern "C" {
     uint8_t launch_data_page_buffer[4096];
     void* xbox_LaunchDataPage = launch_data_page_buffer;
 }
+
+extern "C" int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int32_t Increment, uint8_t Wait) {
+    printf("[KERNEL] KeSetEvent(Event: %p, Increment: %d, Wait: %u) cagrildi.\n", Event, Increment, Wait);
+    return 0;
+}
