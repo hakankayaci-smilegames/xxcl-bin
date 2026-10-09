@@ -1,3 +1,4 @@
+#include "kernel/hal.hpp"
 #include "loader.hpp"
 #include "kernel/mm.hpp"
 #include "kernel/nv2a.hpp"
@@ -115,6 +116,8 @@ int main(int argc, char* argv[]) {
         std::cout << YELLOW << "\n[Baslatiliyor...]" << RESET << "\n";
         xbe::kernel::mm_init_physical_memory_mirrors();
         xbe::kernel::nv2a_init_mmio();
+        xbe::kernel::hal_init_usb_mmio();
+        xbe::kernel::nv2a_start_worker();
         xbe::video::video_init_window(640, 480);
         xbe::load_and_run(res, filepath);
         while(true) {

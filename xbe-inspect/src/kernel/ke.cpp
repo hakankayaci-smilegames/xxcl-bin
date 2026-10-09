@@ -1,3 +1,4 @@
+#include "../kernel.hpp"
 #include "ke.hpp"
 #include <cstdio>
 #include <cstring>
@@ -32,6 +33,11 @@ extern "C" int32_t __attribute__((__stdcall__)) xbox_KeSetEvent(void* Event, int
     return 0;
 }
 
+extern "C" int32_t __attribute__((__stdcall__)) xbox_KePulseEvent(void* Event, int32_t Increment, uint8_t Wait) {
+    printf("[KERNEL] KePulseEvent(Event: %p, Increment: %d, Wait: %u) cagrildi.\n", Event, Increment, Wait);
+    return 0;
+}
+
 extern "C" void __attribute__((__stdcall__)) xbox_KeInitializeInterrupt(
     void* Interrupt, void* ServiceRoutine, void* ServiceContext, 
     uint32_t Vector, uint8_t Irql, uint32_t InterruptMode, uint8_t ShareVector
@@ -45,4 +51,28 @@ extern "C" void __attribute__((__stdcall__)) xbox_KeInitializeInterrupt(
 extern "C" uint8_t __attribute__((__stdcall__)) xbox_KeConnectInterrupt(void* Interrupt) {
     printf("[KERNEL] KeConnectInterrupt(Interrupt: %p) cagrildi.\n", Interrupt);
     return 1; // TRUE (Basarili)
+}
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_KeRaiseIrqlToDpcLevel() {
+    xbe::record_kernel_call(129);
+    // printf("[KERNEL] KeRaiseIrqlToDpcLevel() cagrildi.\n");
+    // Usually IRQL is kept in FS or somewhere. We can just return 0 (PASSIVE_LEVEL)
+    return 0; // Previous IRQL
+}
+
+#include <unistd.h>
+
+extern "C" void __attribute__((__stdcall__)) xbox_KeStallExecutionProcessor(uint32_t MicroSeconds) {
+    xbe::record_kernel_call(151);
+    // printf("[KERNEL] KeStallExecutionProcessor(MicroSeconds: %u)\n", MicroSeconds);
+    usleep(MicroSeconds);
+}
+
+extern "C" void __attribute__((__stdcall__)) xbox_KfLowerIrql() {
+    xbe::record_kernel_call(161);
+}
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_KfRaiseIrql() {
+    xbe::record_kernel_call(162);
+    return 0; // return old IRQL
 }

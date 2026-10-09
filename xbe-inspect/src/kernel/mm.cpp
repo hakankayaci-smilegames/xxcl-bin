@@ -6,6 +6,25 @@
 #include <cstring>
 #include <cstdio>
 
+#include <unordered_map>
+#include <mutex>
+static std::unordered_map<void*, size_t> contiguous_allocs;
+static std::mutex contiguous_allocs_mutex;
+
+static void track_alloc(void* ptr, size_t size) {
+    if (!ptr) return;
+    std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
+    contiguous_allocs[ptr] = size;
+}
+
+static size_t get_tracked_alloc(void* ptr) {
+    std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
+    auto it = contiguous_allocs.find(ptr);
+    if (it != contiguous_allocs.end()) return it->second;
+    return 0;
+}
+
+
 namespace xbe {
 namespace kernel {
 
@@ -50,16 +69,20 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmClaimGpuInstanceMemory(
     if (NumberOfBytes == 0) return nullptr;
 
     void* ptr = nullptr;
-    int res = posix_memalign(&ptr, 4096, NumberOfBytes);
+    
+    size_t alloc_size = (NumberOfBytes + 4095) & ~4095;
+    int res = posix_memalign(&ptr, 4096, alloc_size);
+
     if (res != 0 || !ptr) {
         if (AllocationType) *AllocationType = 0;
     printf("[KERNEL] MmClaimGpuInstanceMemory -> posix_memalign basarisiz! (Boyut: %zu)\n", NumberOfBytes);
         return nullptr;
     }
 
-    memset(ptr, 0, NumberOfBytes);
+    memset(ptr, 0, alloc_size);
 
     if (AllocationType) *AllocationType = 0;
+    track_alloc(ptr, alloc_size);
     printf("[KERNEL] MmClaimGpuInstanceMemory -> Boyut: %zu bayt, AllocType: %p => Donen Ptr: %p\n",
            NumberOfBytes, AllocationType, ptr);
 
@@ -82,14 +105,18 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
     }
 
     void* ptr = nullptr;
-    int res = posix_memalign(&ptr, align, NumberOfBytes);
+    
+    size_t alloc_size = (NumberOfBytes + 4095) & ~4095;
+    int res = posix_memalign(&ptr, align, alloc_size);
+
     if (res != 0 || !ptr) {
         printf("[KERNEL] MmAllocateContiguousMemoryEx -> posix_memalign basarisiz oldu! (Hata: %d)\n", res);
         return nullptr;
     }
 
-    memset(ptr, 0, NumberOfBytes);
+    memset(ptr, 0, alloc_size);
 
+    track_alloc(ptr, alloc_size);
     printf("[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: %zu (0x%zX), Align: 0x%X, Protect: 0x%X => Ptr: %p\n",
            NumberOfBytes, NumberOfBytes, Alignment, ProtectionType, ptr);
 
@@ -105,12 +132,16 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(si
     }
 
     void* ptr = nullptr;
-    if (posix_memalign(&ptr, 4096, NumberOfBytes) != 0) {
+    
+    size_t alloc_size = (NumberOfBytes + 4095) & ~4095;
+    if (posix_memalign(&ptr, 4096, alloc_size) != 0) {
+
         printf("[KERNEL] MmAllocateContiguousMemory basarisiz! (posix_memalign hatasi)\n");
         return nullptr;
     }
 
-    memset(ptr, 0, NumberOfBytes);
+    memset(ptr, 0, alloc_size);
+    track_alloc(ptr, alloc_size);
     return ptr;
 }
 
@@ -198,3 +229,42 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_MmPersistContiguousMemory(
 
 } // namespace kernel
 } // namespace xbe
+
+extern "C" void __attribute__((__stdcall__)) xbox_MmLockUnlockBufferPages(
+    void* BaseAddress,
+    uint32_t NumberOfBytes,
+    uint8_t UnlockPages
+) {
+    xbe::record_kernel_call(175);
+    // Since our emulator uses virtual memory mapped directly, we don't strictly need to lock pages in physical RAM.
+    // We can just ignore this or implement mlock/munlock if necessary.
+    printf("[KERNEL] MmLockUnlockBufferPages(Addr: %p, Size: %u, Unlock: %u) cagrildi.\n", BaseAddress, NumberOfBytes, UnlockPages);
+}
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_MmGetPhysicalAddress(void* BaseAddress) {
+    xbe::record_kernel_call(173);
+    uint32_t virt = (uint32_t)BaseAddress;
+    // On Xbox, physical addresses are usually virt & 0x7FFFFFFF (for 0x80000000 range)
+    // For now, since we run in userspace, let's just return the same address or mask it.
+    // If the game passes this to DMA, we might need the original pointer. But let's return virt.
+    // Actually Xbox DMA might expect physical address < 64MB or 128MB.
+    // Let's return virt & 0x7FFFFFFF;
+    uint32_t phys = virt & 0x03FFFFFF;
+    printf("[KERNEL] MmGetPhysicalAddress(Addr: %p) -> Phys: 0x%08X\n", BaseAddress, phys);
+    return phys;
+}
+
+#include <malloc.h>
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_MmQueryAllocationSize(void* BaseAddress) {
+    xbe::record_kernel_call(180);
+    size_t tracked = get_tracked_alloc(BaseAddress);
+    if (tracked > 0) {
+        printf("[KERNEL] MmQueryAllocationSize(Addr: %p) -> Size: %zu (Tracked)\n", BaseAddress, tracked);
+        return (uint32_t)tracked;
+    }
+    uint32_t size = (uint32_t)malloc_usable_size(BaseAddress);
+    if (size % 4096 != 0) size = (size + 4095) & ~4095;
+    printf("[KERNEL] MmQueryAllocationSize(Addr: %p) -> Size: %u (Fallback)\n", BaseAddress, size);
+    return size;
+}

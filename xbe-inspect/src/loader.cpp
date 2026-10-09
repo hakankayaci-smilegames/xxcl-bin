@@ -93,7 +93,6 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
         }
     }
 
-
     printf("\n\033[1;31m[CRASH]\033[0m SIGSEGV yakalandi!\n");
     printf("Crash Adresi (Fault): 0x%08X\n", fault_addr);
     printf("Instruction Pointer (EIP): 0x%08X\n", eip);

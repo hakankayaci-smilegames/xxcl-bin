@@ -42,5 +42,14 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_MmPersistContiguousMemory(
     uint8_t Persist
 );
 
+    extern "C" void __attribute__((__stdcall__)) xbox_MmLockUnlockBufferPages(void* BaseAddress, uint32_t NumberOfBytes, uint8_t UnlockPages);
+
+    extern "C" uint32_t __attribute__((__stdcall__)) xbox_MmGetPhysicalAddress(void* BaseAddress);
+
+    extern "C" uint32_t __attribute__((__stdcall__)) xbox_MmQueryAllocationSize(void* BaseAddress);
+
 } // namespace kernel
 } // namespace xbe
+
+
+

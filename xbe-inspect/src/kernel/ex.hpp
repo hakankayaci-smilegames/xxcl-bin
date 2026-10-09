@@ -13,3 +13,12 @@ extern "C" {
         uint32_t* ResultLength
     );
 }
+
+extern "C" {
+    void* __attribute__((__stdcall__)) xbox_ExAllocatePool(uint32_t NumberOfBytes);
+    void* __attribute__((__stdcall__)) xbox_ExAllocatePoolWithTag(uint32_t NumberOfBytes, uint32_t Tag);
+    void __attribute__((__stdcall__)) xbox_ExFreePool(void* P);
+}
+
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_ExQueryPoolBlockSize(void* PoolBlock);

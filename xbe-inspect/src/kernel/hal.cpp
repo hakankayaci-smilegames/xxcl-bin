@@ -1,3 +1,5 @@
+#include <sys/mman.h>
+#include <cerrno>
 #include "hal.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
@@ -125,5 +127,45 @@ extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t R
     exit(0);
 }
 
+    extern "C" void hal_init_usb_mmio() {
+        void* mmio = mmap((void*)0xFED00000, 0x00010000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+        if (mmio == MAP_FAILED) {
+            printf("[HAL] USB MMIO 0xFED00000 mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
+        } else {
+            printf("[HAL] USB MMIO sahte donanim alani (0xFED00000 - 64KB) basariyla eslendi.\n");
+
+        void* apic_mmio = mmap((void*)0xFEC00000, 0x00010000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+        if (apic_mmio == MAP_FAILED) {
+            printf("[HAL] APIC MMIO 0xFEC00000 mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
+        } else {
+            printf("[HAL] APIC MMIO sahte donanim alani (0xFEC00000 - 64KB) basariyla eslendi.\n");
+        }
+
+
+        void* apu_mmio = mmap((void*)0xFE800000, 0x00080000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+        if (apu_mmio == MAP_FAILED) {
+            printf("[HAL] APU MMIO 0xFE800000 mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
+        } else {
+            printf("[HAL] APU MMIO sahte donanim alani (0xFE800000 - 512KB) basariyla eslendi.\n");
+        }
+
+        }
+    }
+
 } // namespace kernel
 } // namespace xbe
+
+extern "C" uint32_t __attribute__((__stdcall__)) xbox_AvSendTVEncoderOption(
+    void* OptionData,
+    uint32_t OptionSize,
+    uint32_t OptionType,
+    void* ResultData
+) {
+    xbe::record_kernel_call(2);
+    printf("[KERNEL] AvSendTVEncoderOption cagrildi -> Type: %u, Size: %u\n", OptionType, OptionSize);
+    return 0; // STATUS_SUCCESS
+}
+
+#include <sys/mman.h>
+#include <cerrno>
+

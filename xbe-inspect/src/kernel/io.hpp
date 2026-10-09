@@ -96,7 +96,10 @@ extern "C" {
         int64_t* ByteOffset,
         uint32_t* Key
     );
+    NTSTATUS __attribute__((__stdcall__)) xbox_IoCreateDevice(void* DriverObject, uint32_t DeviceExtensionSize, xbe::kernel::STRING* DeviceName, uint32_t DeviceType, uint8_t Exclusive, void** DeviceObject);
+
 }
 
 } // namespace kernel
 } // namespace xbe
+
