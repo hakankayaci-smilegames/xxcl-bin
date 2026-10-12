@@ -1,12 +1,18 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 
 namespace xbe::kernel {
 
 // MCPX GP/EP DSP DMA register state, independent from instruction execution.
 class ApuDspDma {
 public:
+    using BufferTransfer = bool (*)(void* context, uint32_t buffer_id,
+                                   uint32_t offset, uint32_t ring_size,
+                                   std::span<std::byte> bytes,
+                                   bool write_to_buffer);
+
     enum class Register : uint8_t {
         configuration,
         control,
@@ -27,6 +33,11 @@ public:
     void reset();
     uint32_t read(Register reg);
     void write(Register reg, uint32_t value);
+    bool run_descriptors(std::span<uint32_t> x_memory,
+                         std::span<uint32_t> y_memory,
+                         std::span<uint32_t> program_memory,
+                         BufferTransfer transfer, void* context);
+    bool end_of_list() const { return end_of_list_; }
 
 private:
     uint32_t configuration_ = 0;
@@ -34,6 +45,7 @@ private:
     uint32_t start_block_ = 0;
     uint32_t next_block_ = 0;
     uint32_t control_read_count_ = 0;
+    bool end_of_list_ = false;
 };
 
 } // namespace xbe::kernel

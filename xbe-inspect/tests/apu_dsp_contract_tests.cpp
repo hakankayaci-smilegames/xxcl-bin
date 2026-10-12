@@ -138,6 +138,23 @@ int main() {
         movem_core.program_counter() != 2 || movem_core.register_word(4) != 0x123456 ||
         movem_core.register_word(18) != 21) return 1;
 
+    // PM5 direct X-memory moves transfer between an absolute data address and
+    // a DSP register. The game now reaches this form after DMA EOL.
+    words[0] = 0x0044F400; // MOVE #$123456, X0
+    words[1] = 0x00123456;
+    words[2] = 0x00440000; // MOVE X0, X:$00
+    words[3] = 0x0044F400; // MOVE #$000000, X0
+    words[4] = 0x00000000;
+    words[5] = 0x00448000; // MOVE X:$00, X0
+    xbe::kernel::ApuDspCore direct_move_core;
+    if (!direct_move_core.bootstrap(table_physical, 1)) return 20;
+    for (uint32_t step = 0; step < 4; ++step) {
+        if (direct_move_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 21;
+    }
+    if (direct_move_core.program_counter() != 6) return 22;
+    if (direct_move_core.register_word(4) != 0x123456) return 23;
+    if (direct_move_core.data_word(false, 0) != 0x123456) return 24;
+
     words[0] = 0x000D1080; // BSR xxxx
     words[1] = 0x00000040;
     words[0x40] = 0x0000000C; // RTS

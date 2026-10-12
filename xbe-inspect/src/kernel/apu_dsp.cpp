@@ -48,6 +48,8 @@ bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
         loaded_program[index] = load_le_word(scratch.data() + index * sizeof(uint32_t)) & dsp_word_mask;
     }
     std::copy(loaded_program.begin(), loaded_program.end(), program_.begin());
+    sge_table_physical_ = sge_table_physical;
+    max_sge_ = max_sge;
     x_peripherals_.fill(0);
     y_peripherals_.fill(0);
     dma_.reset();
@@ -95,6 +97,19 @@ void ApuDspCore::write_peripheral_word(bool y_space, uint8_t address, uint32_t v
     if (!y_space && address >= 0x14 && address <= 0x17) {
         const auto reg = dma_register_for_peripheral(address);
         dma_.write(reg, value);
+        if (address == 0x16 && (value & ApuDspDma::action_mask) ==
+                                   ApuDspDma::action_start) {
+            const bool completed = dma_.run_descriptors(
+                x_memory_, y_memory_, program_, transfer_dma_buffer, this);
+            if (completed && dma_.end_of_list()) interrupts_ |= 1u << 7;
+            if (std::getenv("XXCL_TRACE_APU")) {
+                std::fprintf(stderr,
+                             "[APU DSP DMA] descriptor run %s; next=0x%06X EOL=%u\n",
+                             completed ? "completed" : "stopped",
+                             dma_.read(ApuDspDma::Register::next_block),
+                             dma_.end_of_list() ? 1u : 0u);
+            }
+        }
         if (std::getenv("XXCL_TRACE_APU")) {
             std::fprintf(stderr, "[APU DSP DMA] register X:$%02X write = 0x%06X\n",
                          address, value);
@@ -102,6 +117,17 @@ void ApuDspCore::write_peripheral_word(bool y_space, uint8_t address, uint32_t v
         return;
     }
     (y_space ? y_peripherals_ : x_peripherals_)[address] = value;
+}
+
+bool ApuDspCore::transfer_dma_buffer(void* context, uint32_t buffer_id,
+                                    uint32_t offset, uint32_t ring_size,
+                                    std::span<std::byte> bytes,
+                                    bool write_to_buffer) {
+    auto& core = *static_cast<ApuDspCore*>(context);
+    (void)ring_size;
+    if (buffer_id != 0xE && buffer_id != 0xF) return false;
+    return apu_sge_transfer(core.sge_table_physical_, core.max_sge_, offset,
+                            bytes, write_to_buffer);
 }
 
 void ApuDspCore::start_frame() {
@@ -653,6 +679,24 @@ ApuDspCore::StepResult ApuDspCore::step() {
         const uint32_t register_index = parallel_ea & 7;
         uint32_t value = 0;
         uint32_t next_address = program_counter_ + 1;
+        const bool y_space = (instruction & (1u << 19)) != 0;
+        auto& memory = y_space ? y_memory_ : x_memory_;
+
+        // PM5 absolute-address MOVE uses the same top nibble as EA-based
+        // parallel moves, but bit 14 is clear and the six-bit EA is absolute.
+        if ((instruction & (1u << 14)) == 0 &&
+            (instruction & 0x00F40000) != 0x00400000) {
+            const uint32_t address = (instruction >> 8) & 0x3F;
+            if (write_destination) {
+                write_data_register(static_cast<uint8_t>(parallel_destination),
+                                    memory[address]);
+            } else {
+                memory[address] = read_data_register(
+                    static_cast<uint8_t>(parallel_destination)) & dsp_word_mask;
+            }
+            advance_program_counter(program_counter_ + 1);
+            return StepResult::executed;
+        }
 
         if ((instruction & (1u << 14)) == 0 || register_index >= 8) {
             return StepResult::unsupported_instruction;
@@ -661,8 +705,6 @@ ApuDspCore::StepResult ApuDspCore::step() {
         uint32_t address = 0;
         auto* address_register = &registers_[16 + register_index];
         const uint32_t modifier = registers_[24 + register_index];
-        const bool y_space = (instruction & (1u << 19)) != 0;
-        auto& memory = y_space ? y_memory_ : x_memory_;
         if (immediate) {
             if (program_counter_ + 1 >= program_word_count) {
                 return StepResult::unsupported_instruction;
