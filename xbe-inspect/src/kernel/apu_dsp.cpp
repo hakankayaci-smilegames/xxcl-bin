@@ -156,6 +156,23 @@ ApuDspCore::StepResult ApuDspCore::step() {
         return StepResult::executed;
     }
 
+    constexpr uint32_t bsr_short_mask = 0x00FFFC20;
+    constexpr uint32_t bsr_short_value = 0x00050800;
+    if ((instruction & bsr_short_mask) == bsr_short_value) { // BSR xxx
+        if (stack_depth_ >= return_stack_.size()) {
+            return StepResult::unsupported_instruction;
+        }
+        const uint32_t encoded_displacement = (instruction & 0x1F) +
+            ((instruction & 0x3C0) >> 1);
+        const int32_t displacement = (encoded_displacement & 0x100) != 0
+            ? static_cast<int32_t>(encoded_displacement) - 0x200
+            : static_cast<int32_t>(encoded_displacement);
+        return_stack_[stack_depth_++] = program_counter_ + 1;
+        program_counter_ = static_cast<uint32_t>(
+            static_cast<int32_t>(program_counter_) + displacement) & 0x0FFF;
+        return StepResult::executed;
+    }
+
     constexpr uint32_t peripheral_branch_mask = 0x00FFC0A0;
     const uint32_t peripheral_branch = instruction & peripheral_branch_mask;
     if (peripheral_branch == 0x000CC000 || peripheral_branch == 0x000CC020) {

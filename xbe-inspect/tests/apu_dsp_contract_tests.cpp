@@ -148,6 +148,23 @@ int main() {
     if (bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         bsr_core.program_counter() != 2) return 1;
 
+    // The short-relative BSR saves the sequential PC and returns through RTS.
+    words[0] = 0x000BF080; // BSR absolute P:$0020
+    words[1] = 0x00000020;
+    words[4] = 0x0000000C; // RTS
+    words[0x20] = 0x00050BC4; // BSR short-relative -28 -> P:$0004
+    words[0x21] = 0x0000000C; // RTS
+    xbe::kernel::ApuDspCore short_bsr_core;
+    if (!short_bsr_core.bootstrap(table_physical, 1) ||
+        short_bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        short_bsr_core.program_counter() != 0x20 ||
+        short_bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        short_bsr_core.program_counter() != 4 ||
+        short_bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        short_bsr_core.program_counter() != 0x21 ||
+        short_bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        short_bsr_core.program_counter() != 2) return 18;
+
     words[0] = 0x0008F486; // MOVEP #$000001, X:$C6
     words[1] = 0x00000001;
     words[2] = 0x000CC620; // BRSET #0, X:$06, P[+4]
