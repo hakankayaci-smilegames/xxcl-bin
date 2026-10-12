@@ -1,50 +1,43 @@
-# XXCL - Proje Mimarisi ve Teknik Dokümantasyon (Architecture Sync)
+# XXCL Project Architecture
 
-Bu doküman, Google Antigravity ve XXCL uyumluluk katmanı projeleri arasındaki kurallar çerçevesinde otomatik güncellenen yapı ve mimari özetidir. (Rule 6 gereği senkronize edilmiştir).
+This document describes the current module boundaries and the compatibility approach. Xbox kernel export signatures and calling conventions are part of the external ABI and should remain stable while internal implementations are reorganized.
 
-## 1. Dizin ve Dosya Yapısı
+## Source layout
 
+```text
+xbe-inspect/
+├── src/
+│   ├── loader.cpp                 # Maps XBE sections and resolves kernel imports
+│   ├── main.cpp                   # CLI, including isolated --hdd-root selection
+│   ├── kernel/
+│   │   ├── exports.cpp            # Ordinal-to-implementation registry
+│   │   ├── vfs.cpp/.hpp           # Xbox path, symbolic-link, drive and host-root mapping
+│   │   ├── io.cpp/.hpp            # File handles and Nt* file/volume operations
+│   │   ├── device_io.cpp/.hpp     # Device-control dispatch and device backends
+│   │   ├── ps.cpp                 # Xbox process/thread compatibility
+│   │   ├── kpcr.cpp/.hpp          # Per-host-thread Xbox processor control region setup
+│   │   ├── mm.cpp                 # Xbox memory manager compatibility
+│   │   ├── hal.cpp                # Hardware abstraction and fault compatibility
+│   │   └── ...                    # Other kernel export families
+│   └── video/                     # Graphics backends and stubs
+└── tests/
+    ├── vfs_contract_tests.cpp     # Host-root, path mapping and symbolic-link contracts
+    └── io_contract_tests.cpp      # Handle, disposition, offset and query contracts
 ```
-/home/hakan/Desktop/xxcl-bin/
-├── xbe-inspect/                # Ana emülatör / uyumluluk katmanı kaynak dizini
-│   ├── src/
-│   │   ├── loader.cpp          # XBE dosyasını ayrıştıran ve belleğe yükleyen motor
-│   │   ├── kernel/             # Xbox Kernel (__stdcall) fonksiyonları (HLE)
-│   │   │   ├── ex.cpp          # Executive (Heap, Pool, EEPROM vb.)
-│   │   │   ├── mm.cpp          # Memory Manager (mmap, Physical Address mask vb.)
-│   │   │   ├── hal.cpp         # Hardware Abstraction Layer & SIGSEGV Handler
-│   │   │   ├── nv2a.cpp        # NV2A GPU & PushBuffer asenkron worker
-│   │   │   ├── io.cpp          # I/O System (VFS taklitleri)
-│   │   │   ├── ps.cpp          # Process/Thread yönetimi
-│   │   │   ├── ke.cpp          # Kernel Exec (Interrupts, DPC, vb.)
-│   │   │   └── rtl.cpp         # Runtime Library (Kritik Bölümler vb.)
-│   │   ├── video/              # Vulkan / OpenGL stubları (gelecek için)
-│   │   └── main.cpp            # Uygulama giriş noktası ve CLI
-│   └── CMakeLists.txt          # Yapılandırma dosyası
-├── build/                      # Derlenmiş binary (xbe-inspect)
-└── README.md                   # Kullanıcıya yönelik genel proje ve ilerleme durumu
-```
 
-## 2. Bellek Haritası ve Yaklaşımlar (Memory Map Strategy)
+## I/O ownership boundaries
 
-Orijinal Xbox 64MB RAM'e ve spesifik donanım MMIO aralıklarına sahiptir. XXCL bu bellek haritasını Linux üzerinde `mmap(MAP_FIXED)` kullanarak birebir yansıtmaya çalışır.
+- **VFS** owns drive mappings, symbolic links, path normalization, traversal rejection, and configurable host-root translation. It does not perform file operations.
+- **File I/O** owns host descriptor lifetime and the Xbox handle table. `NtCreateFile`, `NtOpenFile`, reads, writes, close, and supported file/volume information queries use this table and report invalid handles or host errors explicitly.
+- **Device I/O** dispatches device-control requests to device-specific backends. The CD-ROM backend handles the supported SCSI media page request and enforces read-only behavior; generic file operations do not contain game-title checks.
+- **Runtime root** defaults to `./hdd`; `--hdd-root <path>` selects an isolated root for integration runs.
 
-- **0x00010000 - 0x0xxxxxxx**: XBE Native Code (.text, .rdata, vb.) alanı.
-- **0xFD000000 - 0xFDFFFFFF**: NV2A (GPU) Register ve Framebuffer erişim alanları (Worker thread veya Handler ile yönetilir).
-- **0xFE800000**: APU (Audio Processing Unit) DSP bellek alanı. (Sega GT'nin çökmesini engellemek için allocate edilip 0'lanır).
-- **0xFEC00000**: APIC (Gelişmiş Kesme Kontrolcüsü). (Belleğe map edilmiştir).
-- **Physical Address Mask**: Oyun kodu sanal bir bellek adresi olan örneğin `0xB02A0000`'ı fiziksel adrese (DMA için vs.) dönüştürürken `MmGetPhysicalAddress` çağrısı `addr & 0x03FFFFFF` maskesini uygular (Linux MMU ve Xbox MMU farkını gizlemek için).
+## Execution and memory model
 
-## 3. Asenkron Donanım Simülasyonu (Puller/Worker)
-Oyunlar donanıma statik bayrak (flag) yazıp donanımın bu bayrağı (örneğin FIFO boş, Frame hazır) sıfırlamasını beklerler (Spin-Loop).
-- **Çözüm (nv2a.cpp)**: XXCL, `pthread` tabanlı arka plan iş parçacıkları (worker thread) çalıştırır. `0xFD100410` (NV2A FIFO) ve benzeri registerları periyodik olarak süpürüp "meşgul" bayrağını kaldırarak oyun motorunun kilitlenmesini çözer.
+The loader maps the XBE at its expected virtual addresses, applies section permissions, resolves imported kernel ordinals, initializes the Xbox KPCR, and invokes the entry point. Memory-manager and HAL modules provide the guest address-space and hardware-compatibility behavior. Thread creation must initialize a valid per-thread KPCR/TLS context and return handles that agree with `NtClose` semantics.
 
-## 4. İstisnai Durum Yakalama (Exception Handling)
-İşletim sistemi seviyesindeki donanımsal okumalar (`in/out` portları) ve çekirdek seviyesi ayrıcalıklı komutlar (örn. `WBINVD` `0F 09`), Linux kullanıcı uzayında anında `SIGSEGV` üretir.
-- **Çözüm (loader.cpp / hal.cpp)**: Özel bir `sigaction` kurulmuştur. Instruction Pointer (EIP) incelenerek eğer `0xEE` (`out dx, al`) gibi bilinen zararsız (veya uyumluluk katmanı için mocklanabilir) bir komutsa, Instruction Pointer bayt boyutu kadar atlanarak (`EIP += 1/2`) programın çalışmasına devam edilir.
+## Current integration checkpoint
 
-## 5. Nesne ve Pointer İzleme (Heap Tracking)
-Xbox Kernel'i, oyunların ne kadar bellek talep ettiğinden bağımsız bazı durumlarda tahsis boyutlarını bilmek ister. Ayrıca oyunlar buffer-overflow veya pointer-underflow yapmaya müsaittir.
-- **Çözüm (ex.cpp / mm.cpp)**: `ExAllocatePool` çağrılarına tahsis boyutu kadar değil, sonuna +`4096 byte` buffer alanı (padding) eklenerek malloc yapılır. Ayrıca dönen pointer ve asıl boyutu bir `std::unordered_map` içinde tutularak, `MmQueryAllocationSize` sorulduğunda orijinal (veya glibc `malloc_usable_size` ile sarmalanmış) güvenli değer dönülür.
+The generic VFS/file contract checks pass. The latest isolated Sega GT run stops in startup before file I/O: the game closes a placeholder system-thread handle, receives `STATUS_INVALID_HANDLE`, and the guest status-to-error helper faults while accessing a null TLS slot at XBE address `0x00106CBC`. The next investigation belongs in the general thread-handle and KPCR/TLS layers. The older `0x0015F8DB` audio-path fault has not been reproduced in this run.
 
-*(Bu doküman XXCL çekirdek kodlamasında sistemin "nasıl" çalıştığını ve kod eklentilerinin "nereye" dahil edileceğini gösteren canlı bir manifestodur.)*
+The architecture goal is reusable Xbox compatibility behavior across titles. Title-specific device responses belong in device backends only where a device protocol requires them, not in generic VFS or file-handle code.

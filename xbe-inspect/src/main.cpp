@@ -2,6 +2,7 @@
 #include "loader.hpp"
 #include "kernel/mm.hpp"
 #include "kernel/nv2a.hpp"
+#include "kernel/vfs.hpp"
 #include "video/window.hpp"
 #include <iostream>
 #include <iomanip>
@@ -32,11 +33,18 @@ int main(int argc, char* argv[]) {
     setvbuf(stderr, NULL, _IONBF, 0);
     bool run_mode = false;
     std::string filepath;
+    std::string hdd_root;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--run") {
             run_mode = true;
+        } else if (arg == "--hdd-root") {
+            if (i + 1 >= argc) {
+                std::cerr << RED << "Hata: --hdd-root bir dizin yolu gerektirir.\n" << RESET;
+                return 1;
+            }
+            hdd_root = argv[++i];
         } else {
             filepath = arg;
         }
@@ -114,6 +122,7 @@ int main(int argc, char* argv[]) {
 
     if (run_mode) {
         std::cout << YELLOW << "\n[Baslatiliyor...]" << RESET << "\n";
+        if (!hdd_root.empty()) xbe::kernel::vfs_set_host_root(hdd_root);
         xbe::kernel::mm_init_physical_memory_mirrors();
         xbe::kernel::nv2a_init_mmio();
         xbe::kernel::hal_init_usb_mmio();

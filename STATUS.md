@@ -1,13 +1,16 @@
-# XXCL - Geliştirme Durumu (Sega GT 2002)
+# XXCL Development Status
 
-## Kaldığımız Yer
-- **DVD Güvenlik Doğrulaması Aşıldı:** Oyunun `\Device\CdRom0` üzerinden yolladığı SCSI `MODE SENSE (10)` Page `0x3E` (Xbox Medya Doğrulaması) komutu yakalandı ve başarılı (`Authenticated = 1`, `Booktype = 0x0D`) olarak mocklandı.
-- **VFS (Virtual File System) ve HDD Atlatması:** Linux dizinlerini (`./hdd/D`, `./hdd/E`) gösteren VFS çeviricisi eklendi. Oyunun HDD kontrolünü geçmesi için `NtQueryVolumeInformationFile` (Ordinal 218) ile 16KB cluster boyutu (Sectors:32 * Bytes:512) simüle edildi.
-- **Sürücü Sembolik Bağları:** `IoCreateSymbolicLink` (Ordinal 67) uygulandı. Oyun başarıyla `\??\D:` adresini `\Device\CdRom0` dizinine bağladı.
-- **Son Duraklama Noktası:** Cihazları ve diskleri bağlayan oyun, sürücülerdeki ilk dosyaya erişmek için **Ordinal 190 (`NtCreateFile`)** fonksiyonunu çağırdı ve sistem güvenli bir şekilde beklemeye geçti.
+## Current checkpoint
 
-## Sonraki Muhtemel Görev
-1. **Ordinal 190 (`NtCreateFile`) Fonksiyonunun Yazılması:** 
-   Oyunun `D:\` (Oyun dataları) veya `E:\UDATA` (Save/Profil) üzerinden açmak istediği ilk dosyaları VFS üzerinden Linux `open()` çağrılarına bağlamak.
-2. **Erişim Bayraklarının Çevirisi:** 
-   `NtCreateFile`'ın aldığı NT parametrelerini (`CreateDisposition`, `DesiredAccess`, `ShareAccess`) POSIX eşdeğerlerine (`O_CREAT`, `O_TRUNC`, `O_RDWR` vb.) uyumlu şekilde çevirecek bir haritalama katmanı kurmak.
+- The source builds in an isolated Debug build directory.
+- The generic VFS and file-I/O contract checks pass (2 CTest targets).
+- The VFS now resolves Xbox drive paths and symbolic links beneath a configurable host root. File handles are tracked and validated; create dispositions, explicit/current offsets, close, supported file/volume queries, and CD-ROM write protection have contract checks.
+- `NtCreateFile` (Ordinal 190) is already implemented and registered. The previous note that it was missing was stale.
+- A fresh Sega GT 2002 run used a temporary HDD root. The existing `hdd/` tree was hash-identical before and after.
+- The fresh run stops before file I/O: the game creates a system thread, later closes the placeholder handle `0x8899AABB`, receives `STATUS_INVALID_HANDLE`, then its guest status-to-error helper attempts to write through a null TLS slot and faults at XBE address `0x00106CBC` (read/write fault address `0x4`). This is earlier than the October 9 log's `0x0015F8DB` audio-path crash, which remains unconfirmed against a fresh run.
+
+## Next move
+
+Trace and correct the general thread-object handle and per-thread TLS setup in the process/thread and KPCR layers. Add a focused contract check for creation/close and TLS initialization. Then rerun the generic checks and Sega GT in a fresh temporary runtime root, recording the next checkpoint. Continue toward the older audio crash only if the new run reaches it.
+
+Keep Xbox export signatures and calling conventions stable. Keep game-specific behavior out of generic VFS, file, and device dispatch; implement device behavior in device backends.

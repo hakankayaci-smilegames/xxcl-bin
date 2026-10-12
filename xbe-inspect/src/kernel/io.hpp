@@ -103,3 +103,5 @@ extern "C" {
 } // namespace kernel
 } // namespace xbe
 
+#pragma pack(pop)
+
