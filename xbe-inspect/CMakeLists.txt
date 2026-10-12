@@ -38,6 +38,12 @@ if(BUILD_TESTING)
     )
     add_test(NAME mmio_contract_tests COMMAND mmio_contract_tests)
 
+    add_executable(apu_contract_tests
+        tests/apu_contract_tests.cpp
+        src/kernel/apu.cpp
+    )
+    add_test(NAME apu_contract_tests COMMAND apu_contract_tests)
+
     add_executable(physical_memory_contract_tests
         tests/physical_memory_contract_tests.cpp
         src/kernel/physical_memory.cpp

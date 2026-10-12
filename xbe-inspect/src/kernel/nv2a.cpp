@@ -37,10 +37,6 @@ void* nv2a_worker_loop(void* arg) {
             *channel_user_get = *channel_user_put;
         }
 
-        
-        volatile uint32_t* apu_fifo_space = (volatile uint32_t*)0xFE820010;
-        *apu_fifo_space = 0x200;
-
         usleep(500);
     }
     return nullptr;

@@ -2,6 +2,7 @@
 #include <cerrno>
 #include "hal.hpp"
 #include "mmio.hpp"
+#include "apu.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
 #include <cstring>
@@ -151,6 +152,9 @@ extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t R
             printf("[HAL] APU MMIO 0xFE800000 mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
         } else {
             printf("[HAL] APU MMIO sahte donanim alani (0xFE800000 - 512KB) basariyla eslendi.\n");
+            if (!apu_initialize()) {
+                printf("[HAL] APU register defaults could not be initialized.\n");
+            }
         }
 
         }

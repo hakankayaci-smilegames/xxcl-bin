@@ -160,6 +160,9 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     sigaction(SIGSEGV, &sa, nullptr);
     sa.sa_sigaction = sigtrap_handler;
     sigaction(SIGTRAP, &sa, nullptr);
+    if (!xbe::kernel::mmio_initialize_apu()) {
+        std::cerr << "[MMIO] APU write tracing protection could not be enabled.\n";
+    }
 
     // Sanal bellek tahsisi icin max VA'i bulalim
     uint32_t min_va = res.base_address;
