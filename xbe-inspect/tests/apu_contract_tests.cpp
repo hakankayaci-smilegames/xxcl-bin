@@ -80,6 +80,19 @@ int main() {
     if (guest_bytes[0xFFE] != 0xA1 || guest_bytes[0xFFF] != 0xA2 ||
         guest_bytes[0x1000] != 0xA3 || guest_bytes[0x1001] != 0xA4) return 1;
 
+    const uint32_t bootstrap_words[] = {0xAB123456, 0xFFABCDEF};
+    std::memcpy(guest_bytes, bootstrap_words, sizeof(bootstrap_words));
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x2040, dma_table_physical) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x20D4, 1) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3FFFC, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3FFFC, 1) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3FFFC, 3)) return 1;
+    if (xbe::kernel::apu_process_mmio_writes() != 5) return 1;
+    uint32_t dsp_word = 0;
+    if (!xbe::kernel::apu_gp_program_read(0, dsp_word) || dsp_word != 0x00123456) return 1;
+    if (!xbe::kernel::apu_gp_program_read(1, dsp_word) || dsp_word != 0x00ABCDEF) return 1;
+    if (xbe::kernel::apu_gp_program_read(0x1000, dsp_word)) return 1;
+
     xbe::kernel::physical_memory_unregister(dma_pages);
     xbe::kernel::physical_memory_unregister(dma_table);
     std::free(dma_pages);

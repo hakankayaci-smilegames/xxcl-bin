@@ -16,5 +16,6 @@ size_t apu_process_mmio_writes();
 bool apu_sge_transfer(uint32_t sge_table_physical, uint32_t max_sge,
                       uint32_t scratch_offset, std::span<std::byte> buffer,
                       bool write_to_guest);
+bool apu_gp_program_read(uint32_t address, uint32_t& value);
 
 } // namespace xbe::kernel

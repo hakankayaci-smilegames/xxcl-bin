@@ -1,5 +1,6 @@
 #include "apu.hpp"
 
+#include "apu_dsp.hpp"
 #include "physical_memory.hpp"
 
 #include <algorithm>
@@ -21,6 +22,12 @@ constexpr uintptr_t vp_current_inbuf_sge_offset = 0x808;
 constexpr uintptr_t vp_current_outbuf_sge = 0x1800;
 constexpr uintptr_t vp_current_outbuf_sge_offset = 0x1808;
 constexpr uintptr_t papu_vpsgeaddr = 0x2030;
+constexpr uintptr_t papu_gpsaddr = 0x2040;
+constexpr uintptr_t papu_gpsmax_sge = 0x20D4;
+constexpr uintptr_t gp_region = 0x30000;
+constexpr uintptr_t gp_reset_register = 0xFFFC;
+constexpr uint32_t gp_reset_bit = 1;
+constexpr uint32_t gp_dsp_reset_bit = 2;
 constexpr uint32_t sge_address_mask = 0xFFFFF000;
 constexpr size_t queue_capacity = 1024;
 constexpr size_t queue_mask = queue_capacity - 1;
@@ -46,6 +53,10 @@ std::atomic<uint32_t> dequeue_position{0};
 uint32_t vp_sge_base = 0;
 uint32_t current_inbuf_sge = 0;
 uint32_t current_outbuf_sge = 0;
+uint32_t gp_sge_base = 0;
+uint32_t gp_max_sge = 0;
+uint32_t gp_reset_value = 0;
+ApuDspCore gp_dsp;
 
 bool dequeue_mmio_write(MmioWrite& write) {
     uint32_t position = dequeue_position.load(std::memory_order_relaxed);
@@ -88,6 +99,41 @@ bool store_sge_entry(uint32_t handle, uint32_t address) {
 }
 
 void process_mmio_write(const MmioWrite& write) {
+    if (write.address == apu_base + papu_gpsaddr) {
+        gp_sge_base = write.value;
+        return;
+    }
+    if (write.address == apu_base + papu_gpsmax_sge) {
+        gp_max_sge = write.value;
+        return;
+    }
+    if (write.address == apu_base + gp_region + gp_reset_register) {
+        const uint32_t previous = gp_reset_value;
+        gp_reset_value = write.value;
+        const uint32_t running_mask = gp_reset_bit | gp_dsp_reset_bit;
+        if ((previous & running_mask) != running_mask &&
+            (write.value & running_mask) == running_mask) {
+            const bool loaded = gp_dsp.bootstrap(gp_sge_base, gp_max_sge);
+            if (std::getenv("XXCL_TRACE_APU")) {
+                if (loaded) {
+                    std::fprintf(stderr,
+                                 "[APU DSP GP] bootstrap SGE=0x%08X max=%u P[0]=0x%06X P[0x7FF]=0x%06X\n",
+                                 gp_sge_base, gp_max_sge, gp_dsp.program_word(0),
+                                 gp_dsp.program_word(ApuDspCore::bootstrap_word_count - 1));
+                    for (uint32_t address = 0; address < 16; ++address) {
+                        std::fprintf(stderr, "[APU DSP GP] P[%03X]=%06X\n",
+                                     address, gp_dsp.program_word(address));
+                    }
+                } else {
+                    std::fprintf(stderr,
+                                 "[APU DSP GP] bootstrap failed SGE=0x%08X max=%u\n",
+                                 gp_sge_base, gp_max_sge);
+                }
+            }
+        }
+        return;
+    }
+
     if (write.address == apu_base + papu_vpsgeaddr) {
         vp_sge_base = write.value;
         return;
@@ -116,6 +162,10 @@ bool apu_initialize() {
     vp_sge_base = 0;
     current_inbuf_sge = 0;
     current_outbuf_sge = 0;
+    gp_sge_base = 0;
+    gp_max_sge = 0;
+    gp_reset_value = 0;
+    gp_dsp = ApuDspCore{};
 
     // The VP PIO queue is empty at reset, so all command slots are available.
     *reinterpret_cast<volatile uint32_t*>(vp_base + vp_pio_free_offset) =
@@ -154,6 +204,12 @@ size_t apu_process_mmio_writes() {
         ++processed;
     }
     return processed;
+}
+
+bool apu_gp_program_read(uint32_t address, uint32_t& value) {
+    if (address >= ApuDspCore::program_word_count) return false;
+    value = gp_dsp.program_word(address);
+    return true;
 }
 
 bool apu_sge_transfer(uint32_t sge_table_physical, uint32_t max_sge,

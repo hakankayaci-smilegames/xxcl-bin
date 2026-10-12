@@ -36,6 +36,7 @@ if(BUILD_TESTING)
         tests/mmio_contract_tests.cpp
         src/kernel/mmio.cpp
         src/kernel/apu.cpp
+        src/kernel/apu_dsp.cpp
         src/kernel/physical_memory.cpp
     )
     add_test(NAME mmio_contract_tests COMMAND mmio_contract_tests)
@@ -43,9 +44,18 @@ if(BUILD_TESTING)
     add_executable(apu_contract_tests
         tests/apu_contract_tests.cpp
         src/kernel/apu.cpp
+        src/kernel/apu_dsp.cpp
         src/kernel/physical_memory.cpp
     )
     add_test(NAME apu_contract_tests COMMAND apu_contract_tests)
+
+    add_executable(apu_dsp_contract_tests
+        tests/apu_dsp_contract_tests.cpp
+        src/kernel/apu.cpp
+        src/kernel/apu_dsp.cpp
+        src/kernel/physical_memory.cpp
+    )
+    add_test(NAME apu_dsp_contract_tests COMMAND apu_dsp_contract_tests)
 
     add_executable(physical_memory_contract_tests
         tests/physical_memory_contract_tests.cpp
