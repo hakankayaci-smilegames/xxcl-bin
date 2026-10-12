@@ -1,4 +1,5 @@
 #include "mmio.hpp"
+#include "apu.hpp"
 
 #include <sys/mman.h>
 #include <sys/syscall.h>
@@ -58,7 +59,6 @@ bool mmio_initialize_interrupt_controller() {
 bool mmio_initialize_apu() {
     const char* trace_setting = std::getenv("XXCL_TRACE_APU");
     trace_apu_writes = trace_setting && trace_setting[0] == '1';
-    if (!trace_apu_writes) return true;
     return mprotect(reinterpret_cast<void*>(apu_base), apu_region_size, PROT_READ) == 0;
 }
 
@@ -86,6 +86,8 @@ bool mmio_complete_write(ucontext_t* context) {
         *reinterpret_cast<volatile uint8_t*>(pending_write) &= static_cast<uint8_t>(~0x2);
     } else if (is_apu_address(pending_write)) {
         trace_apu_write(pending_write);
+        const uint32_t value = *reinterpret_cast<volatile uint32_t*>(pending_write & ~uintptr_t{3});
+        if (!apu_queue_mmio_write(pending_write, value)) return false;
     }
     if (syscall(SYS_mprotect, pending_page, controller_page_size, PROT_READ) != 0) return false;
     pending_write = 0;
