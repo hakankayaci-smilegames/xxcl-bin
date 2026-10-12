@@ -155,6 +155,15 @@ int main() {
     if (direct_move_core.register_word(4) != 0x123456) return 23;
     if (direct_move_core.data_word(false, 0) != 0x123456) return 24;
 
+    // PM2 opcode 0x45 compares signed X0 against accumulator A and sets Z
+    // without changing either operand.
+    words[0] = 0x00200045; // CMP X0,A with parallel R0,R0
+    xbe::kernel::ApuDspCore compare_core;
+    if (!compare_core.bootstrap(table_physical, 1) ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.program_counter() != 1 ||
+        (compare_core.register_word(57) & (1u << 2)) == 0) return 25;
+
     words[0] = 0x000D1080; // BSR xxxx
     words[1] = 0x00000040;
     words[0x40] = 0x0000000C; // RTS

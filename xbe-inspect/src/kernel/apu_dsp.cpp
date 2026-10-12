@@ -631,6 +631,48 @@ ApuDspCore::StepResult ApuDspCore::step() {
     }
 
     // PM2 register transfer with MOVE as the ALU operation (S,D).
+    // The GP firmware uses CMP X0,A with a parallel register transfer. Compare
+    // the signed 56-bit accumulator against the sign-extended 24-bit X0 value.
+    if ((instruction & 0x00FC0000) == 0x00200000 &&
+        (instruction & 0xFF) == 0x45) {
+        const uint32_t source_register = (instruction >> 13) & 0x1F;
+        const uint32_t destination_register = (instruction >> 8) & 0x1F;
+        const uint32_t parallel_value = read_data_register(
+            static_cast<uint8_t>(source_register));
+
+        const uint32_t x0 = registers_[4] & dsp_word_mask;
+        const uint32_t source_top = (x0 & (1u << 23)) != 0 ? 0xFF : 0;
+        const uint32_t source_mid = (x0 & (1u << 23)) != 0 ? dsp_word_mask : 0;
+        const uint32_t a0 = registers_[8] & dsp_word_mask;
+        const uint32_t a1 = registers_[12] & dsp_word_mask;
+        const uint32_t a2 = registers_[10] & 0xFF;
+        const uint32_t result_low = a0;
+        const uint32_t mid_difference = a1 - source_mid;
+        const uint32_t result_mid = mid_difference & dsp_word_mask;
+        const uint32_t top_difference = a2 - source_top - ((mid_difference >> 24) & 1);
+        const uint32_t result_top = top_difference & 0xFF;
+        const uint32_t source_sign = (source_top >> 7) & 1;
+        const uint32_t destination_sign = (a2 >> 7) & 1;
+        const uint32_t result_sign = (result_top >> 7) & 1;
+        const uint32_t overflow = (source_sign ^ destination_sign) &
+                                  (result_sign ^ destination_sign);
+
+        constexpr uint32_t sr_c = 1u << 0;
+        constexpr uint32_t sr_v = 1u << 1;
+        constexpr uint32_t sr_z = 1u << 2;
+        constexpr uint32_t sr_n = 1u << 3;
+        constexpr uint32_t sr_l = 1u << 6;
+        uint32_t status = registers_[57] & ~(sr_c | sr_v | sr_z | sr_n | sr_l);
+        status |= (top_difference >> 8) & sr_c;
+        if (overflow != 0) status |= sr_v | sr_l;
+        if (result_sign != 0) status |= sr_n;
+        if (result_top == 0 && result_mid == 0 && result_low == 0) status |= sr_z;
+        registers_[57] = status;
+        write_data_register(static_cast<uint8_t>(destination_register), parallel_value);
+        advance_program_counter(program_counter_ + 1);
+        return StepResult::executed;
+    }
+
     if ((instruction & 0x00FC0000) == 0x00200000 && (instruction & 0xFF) == 0) {
         const uint32_t source = (instruction >> 13) & 0x1F;
         const uint32_t destination = (instruction >> 8) & 0x1F;
