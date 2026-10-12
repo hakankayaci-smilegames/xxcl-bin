@@ -36,6 +36,8 @@ private:
 
     void advance_program_counter(uint32_t next_address);
     void write_peripheral_word(bool y_space, uint8_t address, uint32_t value);
+    uint32_t read_data_register(uint8_t index) const;
+    void write_data_register(uint8_t index, uint32_t value);
 
     std::array<uint32_t, program_word_count> program_{};
     std::array<uint32_t, 16> return_stack_{};

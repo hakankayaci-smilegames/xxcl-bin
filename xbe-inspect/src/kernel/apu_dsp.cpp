@@ -112,6 +112,37 @@ uint32_t ApuDspCore::register_word(uint8_t index) const {
     return registers_[index & 0x3F];
 }
 
+uint32_t ApuDspCore::read_data_register(uint8_t index) const {
+    index &= 0x3F;
+    if (index != 14 && index != 15) return registers_[index];
+
+    const uint32_t base = index == 14 ? 8 : 9;
+    const uint64_t accumulator = (uint64_t{registers_[base + 2] & 0xFF} << 24) |
+                                 (registers_[base + 4] & dsp_word_mask);
+    const uint32_t scale = (registers_[57] >> 10) & 3;
+    uint64_t value = accumulator;
+    if (scale == 1) value >>= 1;
+    else if (scale == 2) value = (value << 1) | ((registers_[base] >> 23) & 1);
+    return static_cast<uint32_t>(value) & dsp_word_mask;
+}
+
+void ApuDspCore::write_data_register(uint8_t index, uint32_t value) {
+    index &= 0x3F;
+    value &= dsp_word_mask;
+    if (index != 14 && index != 15) {
+        const uint8_t width = register_widths[index];
+        registers_[index] = width == 0 || width >= 24
+            ? value
+            : value & ((uint32_t{1} << width) - 1);
+        return;
+    }
+
+    const uint32_t base = index == 14 ? 8 : 9;
+    registers_[base] = 0;
+    registers_[base + 4] = value;
+    registers_[base + 2] = (value & (1u << 23)) ? 0xFF : 0;
+}
+
 uint32_t ApuDspCore::data_word(bool y_space, uint16_t address) const {
     return (y_space ? y_memory_ : x_memory_)[address];
 }
@@ -224,12 +255,10 @@ ApuDspCore::StepResult ApuDspCore::step() {
         const uint32_t register_index = (instruction >> 8) & 0x3F;
         const uint8_t address = static_cast<uint8_t>(instruction & 0x3F);
         if (write_peripheral) {
-            write_peripheral_word(y_space, address, registers_[register_index]);
+            write_peripheral_word(y_space, address, read_data_register(register_index));
         } else {
-            registers_[register_index] = peripheral_word(y_space, address) &
-                ((register_widths[register_index] == 0 || register_widths[register_index] >= 24)
-                    ? dsp_word_mask
-                    : ((1u << register_widths[register_index]) - 1));
+            write_data_register(static_cast<uint8_t>(register_index),
+                                peripheral_word(y_space, address));
         }
         ++program_counter_;
         return StepResult::executed;

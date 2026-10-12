@@ -190,11 +190,27 @@ int main() {
          xbe::kernel::ApuDspDma::control_frozen) == 0) return 10;
     if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         dma_peripheral_core.program_counter() != 3 ||
-        dma_peripheral_core.register_word(14) != 0x08) return 11;
+        dma_peripheral_core.register_word(12) != 0x08) return 11;
     if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         dma_peripheral_core.program_counter() != 4) return 12;
     if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         dma_peripheral_core.program_counter() != 6) return 13;
+
+    // MOVEP through the full A alias must read/write its 56-bit accumulator
+    // parts, not the unused standalone register slot R14.
+    words[0] = 0x0008F486; // MOVEP #$123456, X:$06
+    words[1] = 0x00123456;
+    words[2] = 0x00084E06; // MOVEP X:$06, A
+    words[3] = 0x0008CE07; // MOVEP A, X:$07
+    xbe::kernel::ApuDspCore accumulator_movep_core;
+    if (!accumulator_movep_core.bootstrap(table_physical, 1) ||
+        accumulator_movep_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        accumulator_movep_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        accumulator_movep_core.register_word(8) != 0 ||
+        accumulator_movep_core.register_word(12) != 0x123456 ||
+        accumulator_movep_core.register_word(10) != 0 ||
+        accumulator_movep_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        accumulator_movep_core.peripheral_word(false, 0x07) != 0x123456) return 19;
 
     // PM2 immediate MOVE #xx,D must update the selected DSP register.
     words[0] = 0x00240100; // MOVE #$01,R4
