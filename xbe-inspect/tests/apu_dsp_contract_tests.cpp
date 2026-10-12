@@ -72,7 +72,7 @@ int main() {
     if (core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.program_counter() != 0x155) return 1;
     if (core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
-        core.program_counter() != 0x157 || core.peripheral_word(false, 5) != 0xFFF) return 1;
+        core.program_counter() != 0x157 || core.peripheral_word(false, 5) != 0) return 1;
     if (core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.program_counter() != 0x159) return 1;
     if (core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
@@ -148,9 +148,9 @@ int main() {
     if (bsr_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         bsr_core.program_counter() != 2) return 1;
 
-    words[0] = 0x0008F485; // MOVEP #$000001, X:$C5
+    words[0] = 0x0008F486; // MOVEP #$000001, X:$C6
     words[1] = 0x00000001;
-    words[2] = 0x000CC520; // BRSET #0, X:$05, P[+4]
+    words[2] = 0x000CC620; // BRSET #0, X:$06, P[+4]
     words[3] = 0x00000004;
     xbe::kernel::ApuDspCore branch_core;
     if (!branch_core.bootstrap(table_physical, 1)) return 1;
@@ -158,6 +158,60 @@ int main() {
         branch_core.program_counter() != 2) return 1;
     if (branch_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         branch_core.program_counter() != 6) return 1;
+
+    // GP firmware polls the FROZEN status after writing action 3 to X:$D6.
+    words[0] = 0x0008F496; // MOVEP #$000003, X:$D6
+    words[1] = 0x00000003;
+    words[2] = 0x00084E16; // MOVEP X:$D6, R14
+    words[3] = 0x0008CE16; // MOVEP R14, X:$D6
+    words[4] = 0x000CD603; // BRCLR #3, X:$D6, P[+0]
+    words[5] = 0x00000000;
+    xbe::kernel::ApuDspCore dma_peripheral_core;
+    if (!dma_peripheral_core.bootstrap(table_physical, 1)) return 1;
+    if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        (dma_peripheral_core.peripheral_word(false, 0x16) &
+         xbe::kernel::ApuDspDma::control_frozen) == 0) return 10;
+    if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        dma_peripheral_core.program_counter() != 3 ||
+        dma_peripheral_core.register_word(14) != 0x08) return 11;
+    if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        dma_peripheral_core.program_counter() != 4) return 12;
+    if (dma_peripheral_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        dma_peripheral_core.program_counter() != 6) return 13;
+
+    // PM2 immediate MOVE #xx,D must update the selected DSP register.
+    words[0] = 0x00240100; // MOVE #$01,R4
+    words[1] = 0x00240000; // MOVE #$00,R4
+    xbe::kernel::ApuDspCore pm2_immediate_core;
+    if (!pm2_immediate_core.bootstrap(table_physical, 1) ||
+        pm2_immediate_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        pm2_immediate_core.register_word(4) != 1 ||
+        pm2_immediate_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        pm2_immediate_core.program_counter() != 2 ||
+        pm2_immediate_core.register_word(4) != 0) return 14;
+
+    // MOVEP's absolute EA immediate form writes a 24-bit literal to X/Y:$pp.
+    words[0] = 0x0007F432; // MOVEP #$FFFFFF, X:$32
+    words[1] = 0x00FFFFFF;
+    xbe::kernel::ApuDspCore movep_absolute_core;
+    if (!movep_absolute_core.bootstrap(table_physical, 1) ||
+        movep_absolute_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        movep_absolute_core.program_counter() != 2 ||
+        movep_absolute_core.peripheral_word(false, 0x32) != 0xFFFFFF) return 15;
+
+    // A frame starts by setting the C5 interrupt bit; JCLR polls that bit.
+    words[0] = 0x0008F485; // MOVEP #$000002, X:$C5 (write-one-to-clear)
+    words[1] = 0x00000002;
+    words[2] = 0x000A8581; // JCLR #1, X:$C5, P:$0020
+    words[3] = 0x00000020;
+    xbe::kernel::ApuDspCore frame_core;
+    if (!frame_core.bootstrap(table_physical, 1)) return 16;
+    frame_core.start_frame();
+    if (frame_core.peripheral_word(false, 5) != 2) return 171;
+    if (frame_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        frame_core.peripheral_word(false, 5) != 0) return 172;
+    if (frame_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        frame_core.program_counter() != 0x20) return 173;
 
     xbe::kernel::physical_memory_unregister(scratch);
     xbe::kernel::physical_memory_unregister(table);

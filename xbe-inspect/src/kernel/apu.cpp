@@ -35,6 +35,7 @@ constexpr size_t queue_capacity = 1024;
 constexpr size_t queue_mask = queue_capacity - 1;
 constexpr uint32_t empty_pio_free_slots = 0x80;
 constexpr uint32_t guest_page_size = 0x1000;
+constexpr auto gp_dsp_frame_period = std::chrono::microseconds(667);
 
 static_assert((queue_capacity & queue_mask) == 0);
 static_assert(std::atomic<uint32_t>::is_always_lock_free);
@@ -129,6 +130,10 @@ void process_mmio_write(const MmioWrite& write) {
                                  gp_sge_base, gp_max_sge, gp_dsp.program_word(0),
                                  gp_dsp.program_word(ApuDspCore::bootstrap_word_count - 1));
                     for (uint32_t address = 0; address < 16; ++address) {
+                        std::fprintf(stderr, "[APU DSP GP] P[%03X]=%06X\n",
+                                     address, gp_dsp.program_word(address));
+                    }
+                    for (uint32_t address = 0x100; address < 0x116; ++address) {
                         std::fprintf(stderr, "[APU DSP GP] P[%03X]=%06X\n",
                                      address, gp_dsp.program_word(address));
                     }
@@ -263,12 +268,14 @@ bool apu_start_worker() {
             bool reported_execution = false;
             bool reported_queue = false;
             uint32_t worker_iterations = 0;
+            auto next_frame = std::chrono::steady_clock::now();
             while (apu_worker_running.load(std::memory_order_acquire)) {
                 const size_t processed = apu_process_mmio_writes(256);
                 if (trace && !reported_queue && processed != 0) {
                     std::fprintf(stderr, "[APU] worker processed %zu MMIO writes\n", processed);
                     reported_queue = true;
                 }
+                gp_dsp.start_frame();
                 const size_t executed = apu_run_gp_dsp(27000);
                 if (trace && !reported_execution && executed != 0) {
                     std::fprintf(stderr,
@@ -284,7 +291,11 @@ bool apu_start_worker() {
                                  gp_dsp.program_word(gp_dsp.program_counter() + 1),
                                  gp_dsp.program_word(gp_dsp.program_counter() + 2), executed);
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                next_frame += gp_dsp_frame_period;
+                std::this_thread::sleep_until(next_frame);
+                if (next_frame < std::chrono::steady_clock::now()) {
+                    next_frame = std::chrono::steady_clock::now();
+                }
             }
         });
     } catch (...) {

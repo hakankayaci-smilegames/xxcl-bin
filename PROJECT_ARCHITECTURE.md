@@ -20,6 +20,9 @@ xbe-inspect/
 │   │   ├── mm.cpp                 # Xbox memory manager compatibility
 │   │   ├── physical_memory.cpp/.hpp # Host allocation ↔ Xbox physical address tracking
 │   │   ├── mmio.cpp/.hpp          # Trapped hardware-register writes and synchronous acknowledgements
+│   │   ├── apu.cpp/.hpp           # APU register state, MMIO queue and GP worker scheduling
+│   │   ├── apu_dsp.cpp/.hpp       # GP DSP memory and instruction subset
+│   │   ├── apu_dsp_dma.cpp/.hpp   # DSP DMA register actions and status
 │   │   ├── hal.cpp                # Hardware abstraction and fault compatibility
 │   │   └── ...                    # Other kernel export families
 │   └── video/                     # Graphics backends and stubs
@@ -27,6 +30,8 @@ xbe-inspect/
     ├── vfs_contract_tests.cpp     # Host-root, path mapping and symbolic-link contracts
     ├── io_contract_tests.cpp      # Handle, disposition, offset and query contracts
     ├── mmio_contract_tests.cpp    # MMIO readiness, command acknowledgement and register writes
+    ├── apu_dsp_contract_tests.cpp # DSP instruction, peripheral and frame contracts
+    ├── apu_dsp_dma_contract_tests.cpp # DSP DMA register contracts
     └── physical_memory_contract_tests.cpp # Physical range and reverse-translation contracts
 ```
 
@@ -40,10 +45,10 @@ xbe-inspect/
 
 ## Execution and memory model
 
-The loader maps the XBE at its expected virtual addresses, applies section permissions, resolves imported kernel ordinals, initializes the Xbox KPCR, and invokes the entry point. Memory-manager and HAL modules provide the guest address-space and hardware-compatibility behavior. Thread creation must initialize a valid per-thread KPCR/TLS context and return handles that agree with `NtClose` semantics. The physical-memory service assigns bounded physical ranges to host allocations and resolves them in both directions. The MMIO component traps writes to the mapped interrupt-controller and APU pages, replays guest instructions, and completes synchronous command acknowledgements before the guest resumes. APU writes are queued from the trap handler and consumed by the runtime loop. The APU backend owns register defaults; its empty VP PIO queue reports 0x80 free slots. VP input/output SGE handle and offset methods update the guest physical SGE table. A shared SGE transfer primitive copies safely across guest physical pages and validates all descriptors before modifying memory. GP reset/bootstrap now loads 0x800 little-endian 24-bit program words from the configured scratch SGE table into a DSP core's program memory. GP/EP instruction execution, frame/interrupt scheduling, voice processing, and command completion still need implementation. Optional APU write tracing is disabled unless `XXCL_TRACE_APU=1` is set.
+The loader maps XBE sections, resolves imports, initializes the Xbox KPCR, and invokes the entry point. The physical-memory service assigns bounded Xbox physical ranges to host allocations and resolves addresses in both directions. MMIO traps mapped writes and completes synchronous command acknowledgements before the guest resumes. APU writes are queued from the trap handler and consumed by the APU worker. The APU backend owns register defaults; its empty VP PIO queue reports 0x80 free slots. VP input/output SGE methods update guest physical mappings; the shared SGE transfer primitive validates descriptors before copying across pages. GP bootstrap loads 0x800 little-endian 24-bit program words into `ApuDspCore`, which owns DSP program/data/register state and its currently supported instructions. `ApuDspDma` owns DMA register actions and status separately. The worker delivers start-frame interrupts at an approximate 667-microsecond cadence with a bounded instruction budget; it is not cycle-accurate. Current runtime reaches unsupported short-relative BSR at DSP PC `0x126`. EP execution, full GP instruction coverage, DMA descriptor transfers, voice processing, and command completion remain future work. Optional APU tracing is disabled unless `XXCL_TRACE_APU=1` is set.
 
 ## Current integration checkpoint
 
-The generic VFS, file-I/O, MMIO, APU, and physical-memory contract checks pass. On a fresh isolated root, Sega GT's first launch creates `TDATA` and `UDATA` title data and requests a reboot. MMIO acknowledgement lets the DSOUND audio factory succeed and moves execution past its former null dereference at `0x0015F8DB`. The former NV2A worker wrote an APU FIFO register; that cross-device write is removed. The APU empty VP PIO queue now reports 0x80 available slots, allowing the guest to pass its `0x00168874` free-space poll. The VP SGE table now receives the input/output physical-page mappings programmed through its handle/offset methods. On the isolated second launch, the guest configures `GPSMAXSGE` to 125, posts status `3` to `[EBX+0x810]`, and waits at `0x00162E2A`. This register setup and the disassembled caller show that VP table updates alone do not complete the transfer; the GP/DSP processing path is still absent. No status clear is justified until that command processing is modeled.
+The generic VFS, file-I/O, MMIO, APU, physical-memory, DSP and DMA contract checks pass (7 CTest targets). On isolated roots, Sega GT creates title data and requests reboot on its first launch. MMIO acknowledgement moves execution past the former null dereference at `0x0015F8DB`; the APU PIO queue lets the guest pass its `0x00168874` free-space poll; VP SGE methods populate guest physical mappings. GP firmware now bootstraps, handles observed DMA actions, and passes its start-frame interrupt poll. The latest run reaches unsupported DSP `BSR` immediate at PC `0x126`. The repository `hdd/` remains hash-identical after isolated runs. The next step is implementing generic short-relative BSR behavior and rerunning the integration workload.
 
 The architecture goal is reusable Xbox compatibility behavior across titles. Title-specific device responses belong in device backends only where a device protocol requires them, not in generic VFS or file-handle code.

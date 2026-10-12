@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 #include <span>
 
 namespace xbe::kernel {
@@ -25,6 +27,15 @@ uint32_t load_le_word(const std::byte* bytes) {
            (std::to_integer<uint32_t>(bytes[3]) << 24);
 }
 
+ApuDspDma::Register dma_register_for_peripheral(uint8_t address) {
+    switch (address) {
+    case 0x14: return ApuDspDma::Register::next_block; // X:$D4
+    case 0x15: return ApuDspDma::Register::start_block; // X:$D5
+    case 0x16: return ApuDspDma::Register::control; // X:$D6
+    default: return ApuDspDma::Register::configuration; // X:$D7
+    }
+}
+
 } // namespace
 
 bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
@@ -39,6 +50,8 @@ bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
     std::copy(loaded_program.begin(), loaded_program.end(), program_.begin());
     x_peripherals_.fill(0);
     y_peripherals_.fill(0);
+    dma_.reset();
+    interrupts_ = 0;
     registers_.fill(0);
     for (uint32_t index = 32; index < 40; ++index) registers_[index] = 0xFFFF;
     program_counter_ = 0;
@@ -56,8 +69,43 @@ uint32_t ApuDspCore::program_word(uint32_t address) const {
     return program_[address] & dsp_word_mask;
 }
 
-uint32_t ApuDspCore::peripheral_word(bool y_space, uint8_t address) const {
-    return (y_space ? y_peripherals_ : x_peripherals_)[address & 0x3F];
+uint32_t ApuDspCore::peripheral_word(bool y_space, uint8_t address) {
+    address &= 0x3F;
+    if (!y_space && address == 0x05) return interrupts_;
+    if (!y_space && address >= 0x14 && address <= 0x17) {
+        const auto reg = dma_register_for_peripheral(address);
+        const uint32_t value = dma_.read(reg);
+        if (address == 0x16 && std::getenv("XXCL_TRACE_APU")) {
+            static uint32_t logged_control_reads = 0;
+            if (logged_control_reads++ < 8) {
+                std::fprintf(stderr, "[APU DSP DMA] control read = 0x%06X\n", value);
+            }
+        }
+        return value;
+    }
+    return (y_space ? y_peripherals_ : x_peripherals_)[address];
+}
+
+void ApuDspCore::write_peripheral_word(bool y_space, uint8_t address, uint32_t value) {
+    address &= 0x3F;
+    if (!y_space && address == 0x05) {
+        interrupts_ &= ~value;
+        return;
+    }
+    if (!y_space && address >= 0x14 && address <= 0x17) {
+        const auto reg = dma_register_for_peripheral(address);
+        dma_.write(reg, value);
+        if (std::getenv("XXCL_TRACE_APU")) {
+            std::fprintf(stderr, "[APU DSP DMA] register X:$%02X write = 0x%06X\n",
+                         address, value);
+        }
+        return;
+    }
+    (y_space ? y_peripherals_ : x_peripherals_)[address] = value;
+}
+
+void ApuDspCore::start_frame() {
+    interrupts_ |= 1u << 1;
 }
 
 uint32_t ApuDspCore::register_word(uint8_t index) const {
@@ -117,13 +165,77 @@ ApuDspCore::StepResult ApuDspCore::step() {
         const bool y_space = (instruction & (1u << 6)) != 0;
         const uint32_t address = (instruction >> 8) & 0x3F;
         const uint32_t bit = instruction & 0x1F;
-        const uint32_t value = (y_space ? y_peripherals_ : x_peripherals_)[address];
+        const uint32_t value = peripheral_word(y_space, static_cast<uint8_t>(address));
         const bool is_set = (value & (1u << bit)) != 0;
         const bool branch = peripheral_branch == 0x000CC020 ? is_set : !is_set;
         const uint32_t offset = program_[program_counter_ + 1] & 0xFFFF;
         advance_program_counter(branch
             ? (program_counter_ + offset) & 0x0FFF
             : program_counter_ + 2);
+        return StepResult::executed;
+    }
+
+    // JCLR/JSET #n,X/Y:$pp,P:xxxx polls an on-chip peripheral bit and uses
+    // an absolute P-space target when the condition is satisfied.
+    constexpr uint32_t peripheral_jump_mask = 0x00FFC0B0;
+    constexpr uint32_t jclr_peripheral_value = 0x000A8080;
+    constexpr uint32_t jset_peripheral_value = 0x000A8090;
+    const uint32_t peripheral_jump = instruction & peripheral_jump_mask;
+    if (peripheral_jump == jclr_peripheral_value ||
+        peripheral_jump == jset_peripheral_value) {
+        if (program_counter_ + 1 >= program_word_count) {
+            return StepResult::unsupported_instruction;
+        }
+        const bool y_space = (instruction & (1u << 6)) != 0;
+        const uint32_t address = (instruction >> 8) & 0x3F;
+        const uint32_t bit = instruction & 0xF;
+        const bool is_set = (peripheral_word(y_space, static_cast<uint8_t>(address)) &
+                             (1u << bit)) != 0;
+        const bool branch = peripheral_jump == jset_peripheral_value ? is_set : !is_set;
+        const uint32_t target = program_[program_counter_ + 1] & 0x0FFF;
+        advance_program_counter(branch ? target : program_counter_ + 2);
+        return StepResult::executed;
+    }
+
+    // MOVEP X/Y:$pp <-> DSP register. The observed GP firmware uses this form
+    // to program DMA start/next-block registers from its internal state.
+    constexpr uint32_t movep_register_mask = 0x00FE40C0;
+    constexpr uint32_t movep_register_value = 0x00084000;
+    if ((instruction & movep_register_mask) == movep_register_value) {
+        const bool write_peripheral = (instruction & (1u << 15)) != 0;
+        const bool y_space = (instruction & (1u << 16)) != 0;
+        const uint32_t register_index = (instruction >> 8) & 0x3F;
+        const uint8_t address = static_cast<uint8_t>(instruction & 0x3F);
+        if (write_peripheral) {
+            write_peripheral_word(y_space, address, registers_[register_index]);
+        } else {
+            registers_[register_index] = peripheral_word(y_space, address) &
+                ((register_widths[register_index] == 0 || register_widths[register_index] >= 24)
+                    ? dsp_word_mask
+                    : ((1u << register_widths[register_index]) - 1));
+        }
+        ++program_counter_;
+        return StepResult::executed;
+    }
+
+    // MOVEP #xxxxxx,X/Y:$pp uses the absolute-address EA with a nonzero
+    // address-register field to encode an immediate peripheral write.
+    constexpr uint32_t movep_ea_peripheral_mask = 0x00FF4080;
+    constexpr uint32_t movep_ea_peripheral_value = 0x00074000;
+    if ((instruction & movep_ea_peripheral_mask) == movep_ea_peripheral_value) {
+        const bool write_peripheral = (instruction & (1u << 15)) != 0;
+        const bool peripheral_y_space = (instruction & (1u << 6)) != 0;
+        const uint32_t effective_address = (instruction >> 8) & 0x3F;
+        const uint32_t mode = effective_address >> 3;
+        const uint32_t address_register = effective_address & 7;
+        const uint8_t peripheral_address = static_cast<uint8_t>(instruction & 0x3F);
+        if (mode != 6 || address_register == 0 || !write_peripheral ||
+            program_counter_ + 1 >= program_word_count) {
+            return StepResult::unsupported_instruction;
+        }
+        write_peripheral_word(peripheral_y_space, peripheral_address,
+                              program_[program_counter_ + 1] & dsp_word_mask);
+        advance_program_counter(program_counter_ + 2);
         return StepResult::executed;
     }
 
@@ -156,7 +268,7 @@ ApuDspCore::StepResult ApuDspCore::step() {
         const bool y_space = (instruction & (1u << 16)) != 0;
         const uint32_t address = instruction & 0x3F;
         const uint32_t value = program_[program_counter_ + 1] & dsp_word_mask;
-        (y_space ? y_peripherals_ : x_peripherals_)[address] = value;
+        write_peripheral_word(y_space, static_cast<uint8_t>(address), value);
         advance_program_counter(program_counter_ + 2);
         return StepResult::executed;
     }
@@ -463,6 +575,19 @@ ApuDspCore::StepResult ApuDspCore::step() {
             if (width != 0) {
                 registers_[destination] = value & ((uint32_t{1} << width) - 1);
             }
+        }
+        advance_program_counter(program_counter_ + 1);
+        return StepResult::executed;
+    }
+
+    // PM2 parallel MOVE #xx,D form. GP firmware uses it for ordinary
+    // register initialization (for example P[0x1E] = MOVE #$00,R4).
+    if ((instruction & 0x00E00000) == 0x00200000 && (instruction & 0xFF) == 0) {
+        const uint32_t destination = (instruction >> 16) & 0x1F;
+        const uint32_t value = (instruction >> 8) & 0xFF;
+        const uint8_t width = register_widths[destination];
+        if (width != 0) {
+            registers_[destination] = value & ((uint32_t{1} << width) - 1);
         }
         advance_program_counter(program_counter_ + 1);
         return StepResult::executed;
