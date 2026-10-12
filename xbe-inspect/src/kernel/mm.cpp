@@ -1,5 +1,6 @@
 #include "mm.hpp"
 #include "../kernel.hpp"
+#include "physical_memory.hpp"
 #include <cstdlib>
 #include <sys/mman.h>
 #include <cerrno>
@@ -22,6 +23,11 @@ static size_t get_tracked_alloc(void* ptr) {
     auto it = contiguous_allocs.find(ptr);
     if (it != contiguous_allocs.end()) return it->second;
     return 0;
+}
+
+static void untrack_alloc(void* ptr) {
+    std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
+    contiguous_allocs.erase(ptr);
 }
 
 
@@ -54,6 +60,8 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* B
     xbe::record_kernel_call(167); // Usually 166 or 167 depending on Ex vs normal.
     printf("[KERNEL] MmFreeContiguousMemory(BaseAddress: %p) cagrildi.\n", BaseAddress);
     if (BaseAddress && BaseAddress != emergency_buffer) {
+        xbe::kernel::physical_memory_unregister(BaseAddress);
+        untrack_alloc(BaseAddress);
         free(BaseAddress);
     }
 }
@@ -80,6 +88,11 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmClaimGpuInstanceMemory(
     }
 
     memset(ptr, 0, alloc_size);
+    if (!physical_memory_register(ptr, alloc_size, 4096, 0, 0)) {
+        free(ptr);
+        if (AllocationType) *AllocationType = 0;
+        return nullptr;
+    }
 
     if (AllocationType) *AllocationType = 0;
     track_alloc(ptr, alloc_size);
@@ -115,6 +128,11 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
     }
 
     memset(ptr, 0, alloc_size);
+    if (!physical_memory_register(ptr, alloc_size, align,
+                                  LowestAcceptableAddress, HighestAcceptableAddress)) {
+        free(ptr);
+        return nullptr;
+    }
 
     track_alloc(ptr, alloc_size);
     printf("[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: %zu (0x%zX), Align: 0x%X, Protect: 0x%X => Ptr: %p\n",
@@ -141,6 +159,10 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemory(si
     }
 
     memset(ptr, 0, alloc_size);
+    if (!physical_memory_register(ptr, alloc_size, 4096, 0, 0)) {
+        free(ptr);
+        return nullptr;
+    }
     track_alloc(ptr, alloc_size);
     return ptr;
 }
@@ -243,13 +265,18 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmLockUnlockBufferPages(
 
 extern "C" uint32_t __attribute__((__stdcall__)) xbox_MmGetPhysicalAddress(void* BaseAddress) {
     xbe::record_kernel_call(173);
-    uint32_t virt = (uint32_t)BaseAddress;
-    // On Xbox, physical addresses are usually virt & 0x7FFFFFFF (for 0x80000000 range)
-    // For now, since we run in userspace, let's just return the same address or mask it.
-    // If the game passes this to DMA, we might need the original pointer. But let's return virt.
-    // Actually Xbox DMA might expect physical address < 64MB or 128MB.
-    // Let's return virt & 0x7FFFFFFF;
-    uint32_t phys = virt & 0x03FFFFFF;
+    const uintptr_t virt = reinterpret_cast<uintptr_t>(BaseAddress);
+    uint32_t phys = xbe::kernel::physical_memory_from_host(BaseAddress);
+    if (phys == 0) {
+        constexpr uintptr_t kseg0_end = 0x84000000;
+        constexpr uintptr_t kseg1_end = 0xA4000000;
+        if ((virt >= 0x80000000 && virt < kseg0_end) ||
+            (virt >= 0xA0000000 && virt < kseg1_end)) {
+            phys = static_cast<uint32_t>(virt & 0x1fffffff);
+        } else {
+            phys = xbe::kernel::physical_memory_map_page(BaseAddress);
+        }
+    }
     printf("[KERNEL] MmGetPhysicalAddress(Addr: %p) -> Phys: 0x%08X\n", BaseAddress, phys);
     return phys;
 }

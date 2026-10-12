@@ -37,4 +37,10 @@ if(BUILD_TESTING)
         src/kernel/mmio.cpp
     )
     add_test(NAME mmio_contract_tests COMMAND mmio_contract_tests)
+
+    add_executable(physical_memory_contract_tests
+        tests/physical_memory_contract_tests.cpp
+        src/kernel/physical_memory.cpp
+    )
+    add_test(NAME physical_memory_contract_tests COMMAND physical_memory_contract_tests)
 endif()
