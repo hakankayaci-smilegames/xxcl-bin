@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <cstring>
 #include "kpcr.hpp"
+#include "handles.hpp"
 
 static std::vector<pthread_t> g_xbox_threads;
 
@@ -27,16 +28,16 @@ extern "C" {
         printf("  StartRoutine : 0x%08X\n", arg6);
         printf("  StartContext : 0x%08X\n", arg7);
         
-        if (ThreadHandle) {
-            *ThreadHandle = 0x8899AABB;
-        }
+        if (!ThreadHandle || !arg6) return static_cast<NTSTATUS>(0xC000000D);
+        *ThreadHandle = 0;
 
         typedef void (__attribute__((__stdcall__)) *ThreadFunc)(uint32_t);
         ThreadFunc routine = (ThreadFunc)arg6;
         uint32_t context = arg7;
 
         pthread_t pt;
-        pthread_create(&pt, nullptr, [](void* arg) -> void* {
+        auto* thread_args = new std::pair<ThreadFunc, uint32_t>(routine, context);
+        const int create_error = pthread_create(&pt, nullptr, [](void* arg) -> void* {
             auto args = (std::pair<ThreadFunc, uint32_t>*)arg;
             printf("[KERNEL] Yeni Xbox Thread'i basliyor: %p\n", args->first);
             
@@ -93,9 +94,15 @@ extern "C" {
             printf("[KERNEL] Xbox Thread'i sonlandi.\n");
             delete args;
             return nullptr;
-        }, new std::pair<ThreadFunc, uint32_t>(routine, context));
+        }, thread_args);
+
+        if (create_error != 0) {
+            delete thread_args;
+            return static_cast<NTSTATUS>(0xC0000001);
+        }
 
         g_xbox_threads.push_back(pt);
+        *ThreadHandle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(xbe::kernel::register_thread_handle(pt)));
 
         return 0; // STATUS_SUCCESS
     }

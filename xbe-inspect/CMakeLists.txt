@@ -26,6 +26,7 @@ if(BUILD_TESTING)
     add_executable(io_contract_tests
         tests/io_contract_tests.cpp
         src/kernel/io.cpp
+        src/kernel/handles.cpp
         src/kernel/device_io.cpp
         src/kernel/vfs.cpp
     )

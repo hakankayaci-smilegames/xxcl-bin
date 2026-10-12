@@ -1,4 +1,5 @@
 #include "../src/kernel/io.hpp"
+#include "../src/kernel/handles.hpp"
 #include "../src/kernel/vfs.hpp"
 
 #include <filesystem>
@@ -8,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
+#include <pthread.h>
 
 namespace fs = std::filesystem;
 using namespace xbe::kernel;
@@ -52,6 +54,29 @@ int main() {
                       not_found, "NtOpenFile reports missing files");
         expect_status(iosb.Status, not_found, "NtOpenFile records the failure in IO_STATUS_BLOCK");
         if (handle != nullptr) throw std::runtime_error("NtOpenFile returned a handle for a missing file");
+
+        fs::create_directories(root / "E" / "TDATA");
+        std::string existing_directory_path = "E:\\TDATA";
+        STRING existing_directory_name{static_cast<uint16_t>(existing_directory_path.size()),
+            static_cast<uint16_t>(existing_directory_path.size()), existing_directory_path.data()};
+        OBJECT_ATTRIBUTES existing_directory_attributes = object_attributes(existing_directory_name);
+        expect_status(xbox_NtCreateFile(&handle, 0x00100001, &existing_directory_attributes,
+                      &iosb, nullptr, 0x80, 3, 3, 0x4021, nullptr, 0), 0,
+                      "FILE_OPEN_IF opens an existing directory");
+        if (iosb.Information != 1) throw std::runtime_error("FILE_OPEN_IF did not report an opened directory");
+        expect_status(xbox_NtClose(handle), 0, "NtClose closes a directory handle");
+
+        std::string new_directory_path = "E:\\NEW_DIR";
+        STRING new_directory_name{static_cast<uint16_t>(new_directory_path.size()),
+            static_cast<uint16_t>(new_directory_path.size()), new_directory_path.data()};
+        OBJECT_ATTRIBUTES new_directory_attributes = object_attributes(new_directory_name);
+        expect_status(xbox_NtCreateFile(&handle, 0x00100001, &new_directory_attributes,
+                      &iosb, nullptr, 0x80, 3, 3, 0x4021, nullptr, 0), 0,
+                      "FILE_OPEN_IF creates a missing directory");
+        if (!fs::is_directory(root / "E" / "NEW_DIR") || iosb.Information != 2) {
+            throw std::runtime_error("FILE_OPEN_IF did not create a directory");
+        }
+        expect_status(xbox_NtClose(handle), 0, "NtClose closes a created directory handle");
 
         const fs::path file_path = root / "E" / "item.bin";
         {
@@ -144,10 +169,10 @@ int main() {
         } size_info{};
         expect_status(xbe::kernel::xbox_NtQueryVolumeInformationFile(handle, &iosb, &size_info,
                       sizeof(size_info), 3), 0, "FileFsSizeInformation is supported");
-        if (size_info.SectorsPerAllocationUnit == 0 || size_info.BytesPerSector != 512 ||
+        if (size_info.SectorsPerAllocationUnit != 32 || size_info.BytesPerSector != 512 ||
             size_info.TotalAllocationUnits == 0 ||
             iosb.Information != sizeof(size_info)) {
-            throw std::runtime_error("FileFsSizeInformation returned invalid host volume geometry");
+            throw std::runtime_error("FileFsSizeInformation returned invalid Xbox HDD geometry");
         }
 
         expect_status(xbe::kernel::xbox_NtClose(handle), 0, "NtClose closes tracked handles");
@@ -156,6 +181,12 @@ int main() {
                       "closed handles are rejected");
         expect_status(xbe::kernel::xbox_NtClose(handle), static_cast<NTSTATUS>(0xC0000008),
                       "NtClose rejects already closed handles");
+
+        void* thread_handle = register_thread_handle(pthread_self());
+        expect_status(xbe::kernel::xbox_NtClose(thread_handle), 0,
+                      "NtClose releases tracked thread handles");
+        expect_status(xbe::kernel::xbox_NtClose(thread_handle), static_cast<NTSTATUS>(0xC0000008),
+                      "NtClose rejects an already closed thread handle");
 
         std::string drive_path = "D:\\";
         STRING drive_name{static_cast<uint16_t>(drive_path.size()), static_cast<uint16_t>(drive_path.size()), drive_path.data()};

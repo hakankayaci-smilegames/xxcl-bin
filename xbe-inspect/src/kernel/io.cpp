@@ -1,6 +1,7 @@
 #include "io.hpp"
 #include "vfs.hpp"
 #include "device_io.hpp"
+#include "handles.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
 #include <cstring>
@@ -8,22 +9,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <map>
 #include <cerrno>
-#include <mutex>
 #include <cstdint>
 
 namespace xbe {
 namespace kernel {
-
-struct FileHandleRecord {
-    int fd;
-    bool cdrom;
-};
-
-static std::map<void*, FileHandleRecord> g_handle_to_fd;
-static std::mutex g_handle_mutex;
-static uintptr_t g_next_handle = 0x10000;
 
 static constexpr NTSTATUS STATUS_SUCCESS = 0;
 static constexpr NTSTATUS STATUS_INVALID_PARAMETER = static_cast<NTSTATUS>(0xC000000D);
@@ -52,34 +42,14 @@ static NTSTATUS status_from_errno(int error) {
     }
 }
 
-static void* register_handle(int fd, bool cdrom) {
-    std::lock_guard<std::mutex> lock(g_handle_mutex);
-    uintptr_t value = g_next_handle++;
-    if (value == 0) value = g_next_handle++;
-    void* handle = reinterpret_cast<void*>(value);
-    g_handle_to_fd[handle] = {fd, cdrom};
-    return handle;
-}
-
 static int get_fd(void* handle) {
-    std::lock_guard<std::mutex> lock(g_handle_mutex);
-    const auto it = g_handle_to_fd.find(handle);
-    return it == g_handle_to_fd.end() ? -1 : it->second.fd;
+    FileHandleRecord record{};
+    return lookup_file_handle(handle, record) ? record.fd : -1;
 }
 
 static bool is_cdrom_handle(void* handle) {
-    std::lock_guard<std::mutex> lock(g_handle_mutex);
-    const auto it = g_handle_to_fd.find(handle);
-    return it != g_handle_to_fd.end() && it->second.cdrom;
-}
-
-static int remove_handle(void* handle) {
-    std::lock_guard<std::mutex> lock(g_handle_mutex);
-    const auto it = g_handle_to_fd.find(handle);
-    if (it == g_handle_to_fd.end()) return -1;
-    const int fd = it->second.fd;
-    g_handle_to_fd.erase(it);
-    return fd;
+    FileHandleRecord record{};
+    return lookup_file_handle(handle, record) && record.cdrom;
 }
 
 static void set_io_status(IO_STATUS_BLOCK* iosb, NTSTATUS status, uintptr_t information = 0) {
@@ -126,9 +96,9 @@ static int access_mode(uint32_t desired_access) {
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtClose(void* Handle) {
     xbe::record_kernel_call(187);
     printf("[KERNEL] NtClose(Handle: %p) cagrildi.\n", Handle);
-    const int fd = remove_handle(Handle);
-    if (fd < 0) return STATUS_INVALID_HANDLE;
-    return close(fd) == 0 ? STATUS_SUCCESS : status_from_errno(errno);
+    const int error = close_kernel_handle(Handle);
+    return error == 0 ? STATUS_SUCCESS :
+           error == EBADF ? STATUS_INVALID_HANDLE : status_from_errno(error);
 }
 
 extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
@@ -155,7 +125,7 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtOpenFile(
     if ((OpenOptions & 0x00000001) != 0) flags |= O_DIRECTORY;
     const int fd = status == STATUS_SUCCESS ? open(linux_path.c_str(), flags | O_CLOEXEC) : -1;
     if (fd < 0 && status == STATUS_SUCCESS) status = status_from_errno(errno);
-    if (fd >= 0) *FileHandle = register_handle(fd, vfs_is_cdrom_path(xbox_path));
+    if (fd >= 0) *FileHandle = register_file_handle(fd, vfs_is_cdrom_path(xbox_path));
     if (IoStatusBlock) {
         auto* iosb = static_cast<IO_STATUS_BLOCK*>(IoStatusBlock);
         iosb->Status = static_cast<uint32_t>(status);
@@ -236,11 +206,16 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtQueryVolumeInformationFi
                 } else {
                     memset(FsInformation, 0, sizeof(FILE_FS_SIZE_INFORMATION));
                     auto* info = (FILE_FS_SIZE_INFORMATION*)FsInformation;
-                    info->TotalAllocationUnits = volume_info.f_blocks;
-                    info->AvailableAllocationUnits = volume_info.f_bavail;
-                    info->SectorsPerAllocationUnit = static_cast<uint32_t>((volume_info.f_frsize + 511) / 512);
-                    if (info->SectorsPerAllocationUnit == 0) info->SectorsPerAllocationUnit = 1;
-                    info->BytesPerSector = 512;
+                    constexpr uint32_t xbox_sector_bytes = 512;
+                    constexpr uint32_t fatx_allocation_bytes = 16 * 1024;
+                    const uint32_t allocation_bytes = is_cdrom_handle(FileHandle)
+                        ? static_cast<uint32_t>(volume_info.f_frsize) : fatx_allocation_bytes;
+                    info->TotalAllocationUnits =
+                        (static_cast<uint64_t>(volume_info.f_blocks) * volume_info.f_frsize) / allocation_bytes;
+                    info->AvailableAllocationUnits =
+                        (static_cast<uint64_t>(volume_info.f_bavail) * volume_info.f_frsize) / allocation_bytes;
+                    info->SectorsPerAllocationUnit = (allocation_bytes + xbox_sector_bytes - 1) / xbox_sector_bytes;
+                    info->BytesPerSector = xbox_sector_bytes;
                     info_size = sizeof(FILE_FS_SIZE_INFORMATION);
                 }
             } else status = STATUS_INFO_LENGTH_MISMATCH;
@@ -301,18 +276,32 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtCreateFile(
                         CreateDisposition == 3 || CreateDisposition == 5;
     const bool exclusive = CreateDisposition == 2;
     const bool truncate = CreateDisposition == 0 || CreateDisposition == 4 || CreateDisposition == 5;
+    if (directory && truncate) {
+        set_io_status(IoStatusBlock, STATUS_INVALID_PARAMETER);
+        return STATUS_INVALID_PARAMETER;
+    }
     if (vfs_is_cdrom_path(xbox_path) && (requests_write_access(DesiredAccess) || create || truncate)) {
         set_io_status(IoStatusBlock, STATUS_MEDIA_WRITE_PROTECTED);
         return STATUS_MEDIA_WRITE_PROTECTED;
     }
     const bool existed = access(linux_path.c_str(), F_OK) == 0;
 
-    int flags = access_mode(DesiredAccess) | O_CLOEXEC;
-    if (create) flags |= O_CREAT;
-    if (exclusive) flags |= O_EXCL;
-    if (truncate) flags |= O_TRUNC;
-    if (directory) flags |= O_DIRECTORY;
-    const int fd = open(linux_path.c_str(), flags, FileAttributes & 0777 ? FileAttributes & 0777 : 0666);
+    int fd = -1;
+    if (directory) {
+        if (create && mkdir(linux_path.c_str(), 0777) != 0 &&
+            (errno != EEXIST || exclusive)) {
+            status = status_from_errno(errno);
+            set_io_status(IoStatusBlock, status);
+            return status;
+        }
+        fd = open(linux_path.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    } else {
+        int flags = access_mode(DesiredAccess) | O_CLOEXEC;
+        if (create) flags |= O_CREAT;
+        if (exclusive) flags |= O_EXCL;
+        if (truncate) flags |= O_TRUNC;
+        fd = open(linux_path.c_str(), flags, 0666);
+    }
     if (fd < 0) {
         status = status_from_errno(errno);
         set_io_status(IoStatusBlock, status);
@@ -320,7 +309,7 @@ extern "C" NTSTATUS __attribute__((__stdcall__)) xbox_NtCreateFile(
         return status;
     }
 
-    *FileHandle = register_handle(fd, vfs_is_cdrom_path(xbox_path));
+    *FileHandle = register_file_handle(fd, vfs_is_cdrom_path(xbox_path));
     uintptr_t information = existed ? 1 : 2;
     if (existed && CreateDisposition == 0) information = 0;
     else if (existed && (CreateDisposition == 4 || CreateDisposition == 5)) information = 3;

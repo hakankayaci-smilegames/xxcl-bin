@@ -14,6 +14,7 @@ xbe-inspect/
 │   │   ├── vfs.cpp/.hpp           # Xbox path, symbolic-link, drive and host-root mapping
 │   │   ├── io.cpp/.hpp            # File handles and Nt* file/volume operations
 │   │   ├── device_io.cpp/.hpp     # Device-control dispatch and device backends
+│   │   ├── handles.cpp/.hpp       # Shared file/thread kernel handle ownership
 │   │   ├── ps.cpp                 # Xbox process/thread compatibility
 │   │   ├── kpcr.cpp/.hpp          # Per-host-thread Xbox processor control region setup
 │   │   ├── mm.cpp                 # Xbox memory manager compatibility
@@ -28,7 +29,8 @@ xbe-inspect/
 ## I/O ownership boundaries
 
 - **VFS** owns drive mappings, symbolic links, path normalization, traversal rejection, and configurable host-root translation. It does not perform file operations.
-- **File I/O** owns host descriptor lifetime and the Xbox handle table. `NtCreateFile`, `NtOpenFile`, reads, writes, close, and supported file/volume information queries use this table and report invalid handles or host errors explicitly.
+- **Kernel handles** provide shared identity and close semantics for file and thread objects. Closing a thread handle releases its reference while the host thread can continue executing.
+- **File I/O** owns `NtCreateFile`, `NtOpenFile`, reads, writes, and supported file/volume information queries. Directory dispositions use directory creation/opening. HDD volume size queries expose 16 KiB FATX allocation units rather than host block size.
 - **Device I/O** dispatches device-control requests to device-specific backends. The CD-ROM backend handles the supported SCSI media page request and enforces read-only behavior; generic file operations do not contain game-title checks.
 - **Runtime root** defaults to `./hdd`; `--hdd-root <path>` selects an isolated root for integration runs.
 
@@ -38,6 +40,6 @@ The loader maps the XBE at its expected virtual addresses, applies section permi
 
 ## Current integration checkpoint
 
-The generic VFS/file contract checks pass. The latest isolated Sega GT run stops in startup before file I/O: the game closes a placeholder system-thread handle, receives `STATUS_INVALID_HANDLE`, and the guest status-to-error helper faults while accessing a null TLS slot at XBE address `0x00106CBC`. The next investigation belongs in the general thread-handle and KPCR/TLS layers. The older `0x0015F8DB` audio-path fault has not been reproduced in this run.
+The generic VFS/file contract checks pass. On a fresh isolated root, Sega GT's first launch creates `TDATA` and `UDATA` title data and requests a reboot. The second launch passes language and graphics initialization, then faults at XBE address `0x0015F8DB` in DSOUND after 2,357 kernel calls. This reproduces the older audio-path checkpoint with fresh evidence. The next investigation belongs in the general audio or memory contract reached by the DSOUND caller.
 
 The architecture goal is reusable Xbox compatibility behavior across titles. Title-specific device responses belong in device backends only where a device protocol requires them, not in generic VFS or file-handle code.
