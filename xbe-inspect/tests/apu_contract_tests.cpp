@@ -92,6 +92,8 @@ int main() {
     if (!xbe::kernel::apu_gp_program_read(0, dsp_word) || dsp_word != 0x00123456) return 1;
     if (!xbe::kernel::apu_gp_program_read(1, dsp_word) || dsp_word != 0x00ABCDEF) return 1;
     if (xbe::kernel::apu_gp_program_read(0x1000, dsp_word)) return 1;
+    if (xbe::kernel::apu_run_gp_dsp(32) != 0) return 1;
+    if (!xbe::kernel::apu_gp_program_read(0, dsp_word) || dsp_word != 0x00123456) return 1;
 
     xbe::kernel::physical_memory_unregister(dma_pages);
     xbe::kernel::physical_memory_unregister(dma_table);

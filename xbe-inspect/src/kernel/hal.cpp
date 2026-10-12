@@ -1,8 +1,8 @@
 #include <sys/mman.h>
 #include <cerrno>
 #include "hal.hpp"
-#include "mmio.hpp"
 #include "apu.hpp"
+#include "mmio.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
 #include <cstring>
@@ -126,6 +126,7 @@ extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t R
         ebp_ptr = (uint32_t*)ebp_ptr[0];
     }
     printf("-------------------------------\n");
+    xbe::kernel::apu_stop_worker();
     exit(0);
 }
 

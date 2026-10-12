@@ -3,6 +3,7 @@
 #include "kernel/kpcr.hpp"
 #include "kernel/vfs.hpp"
 #include "kernel/mmio.hpp"
+#include "kernel/apu.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/mman.h>
@@ -261,6 +262,10 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     xbe::kernel::init_xbox_kpcr();
     xbe::kernel::vfs_init();
     xbe::start_execution_timer();
+    if (!xbe::kernel::apu_start_worker()) {
+        std::cerr << "[APU] Could not start the APU device worker.\n";
+        return false;
+    }
     
     typedef int (*XboxEntryPointFunc)();
     XboxEntryPointFunc ep_func = reinterpret_cast<XboxEntryPointFunc>(ep_addr);

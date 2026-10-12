@@ -132,7 +132,6 @@ int main(int argc, char* argv[]) {
         xbe::load_and_run(res, filepath);
         while(true) {
             xbe::video::video_poll_events();
-            xbe::kernel::apu_process_mmio_writes();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
     }

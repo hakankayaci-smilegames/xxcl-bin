@@ -6,9 +6,11 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include <vector>
 
 namespace xbe::kernel {
@@ -57,6 +59,10 @@ uint32_t gp_sge_base = 0;
 uint32_t gp_max_sge = 0;
 uint32_t gp_reset_value = 0;
 ApuDspCore gp_dsp;
+std::atomic<bool> apu_worker_running{false};
+std::thread apu_worker;
+uint32_t last_reported_dsp_fault_pc = UINT32_MAX;
+uint32_t last_reported_dsp_fault_instruction = UINT32_MAX;
 
 bool dequeue_mmio_write(MmioWrite& write) {
     uint32_t position = dequeue_position.load(std::memory_order_relaxed);
@@ -113,6 +119,8 @@ void process_mmio_write(const MmioWrite& write) {
         const uint32_t running_mask = gp_reset_bit | gp_dsp_reset_bit;
         if ((previous & running_mask) != running_mask &&
             (write.value & running_mask) == running_mask) {
+            last_reported_dsp_fault_pc = UINT32_MAX;
+            last_reported_dsp_fault_instruction = UINT32_MAX;
             const bool loaded = gp_dsp.bootstrap(gp_sge_base, gp_max_sge);
             if (std::getenv("XXCL_TRACE_APU")) {
                 if (loaded) {
@@ -153,6 +161,7 @@ void process_mmio_write(const MmioWrite& write) {
 } // namespace
 
 bool apu_initialize() {
+    apu_stop_worker();
     for (uint32_t index = 0; index < queue_capacity; ++index) {
         write_queue[index].sequence.store(index, std::memory_order_relaxed);
         write_queue[index].write = {};
@@ -196,14 +205,98 @@ bool apu_queue_mmio_write(uintptr_t address, uint32_t value) {
     }
 }
 
-size_t apu_process_mmio_writes() {
+size_t apu_process_mmio_writes(size_t max_writes) {
     size_t processed = 0;
     MmioWrite write{};
-    while (dequeue_mmio_write(write)) {
+    while (processed < max_writes && dequeue_mmio_write(write)) {
         process_mmio_write(write);
         ++processed;
     }
     return processed;
+}
+
+size_t apu_run_gp_dsp(uint32_t instruction_budget) {
+    static bool reported_run_state = false;
+    const bool trace = std::getenv("XXCL_TRACE_APU") != nullptr;
+    if (trace && !reported_run_state &&
+        (gp_reset_value & (gp_reset_bit | gp_dsp_reset_bit)) ==
+            (gp_reset_bit | gp_dsp_reset_bit)) {
+        std::fprintf(stderr, "[APU DSP GP] run enabled reset=0x%X PC=0x%03X\n",
+                     gp_reset_value, gp_dsp.program_counter());
+        reported_run_state = true;
+    }
+    if ((gp_reset_value & (gp_reset_bit | gp_dsp_reset_bit)) !=
+        (gp_reset_bit | gp_dsp_reset_bit)) return 0;
+
+    uint32_t executed = 0;
+    while (executed < instruction_budget) {
+        const uint32_t pc = gp_dsp.program_counter();
+        const ApuDspCore::StepResult result = gp_dsp.step();
+        if (result != ApuDspCore::StepResult::executed) {
+            const uint32_t instruction = gp_dsp.program_word(pc);
+            if (std::getenv("XXCL_TRACE_APU") &&
+                (pc != last_reported_dsp_fault_pc ||
+                 instruction != last_reported_dsp_fault_instruction)) {
+                std::fprintf(stderr,
+                             "[APU DSP GP] stopped result=%u PC=0x%03X P=0x%06X\n",
+                             static_cast<unsigned>(result), pc, instruction);
+                last_reported_dsp_fault_pc = pc;
+                last_reported_dsp_fault_instruction = instruction;
+            }
+            break;
+        }
+        ++executed;
+    }
+    return executed;
+}
+
+bool apu_start_worker() {
+    bool expected = false;
+    if (!apu_worker_running.compare_exchange_strong(expected, true,
+                                                    std::memory_order_acq_rel)) {
+        return true;
+    }
+    try {
+        apu_worker = std::thread([] {
+            const bool trace = std::getenv("XXCL_TRACE_APU") != nullptr;
+            if (trace) std::fprintf(stderr, "[APU] device worker started\n");
+            bool reported_execution = false;
+            bool reported_queue = false;
+            uint32_t worker_iterations = 0;
+            while (apu_worker_running.load(std::memory_order_acquire)) {
+                const size_t processed = apu_process_mmio_writes(256);
+                if (trace && !reported_queue && processed != 0) {
+                    std::fprintf(stderr, "[APU] worker processed %zu MMIO writes\n", processed);
+                    reported_queue = true;
+                }
+                const size_t executed = apu_run_gp_dsp(27000);
+                if (trace && !reported_execution && executed != 0) {
+                    std::fprintf(stderr,
+                                 "[APU DSP GP] worker executed %zu instructions PC=0x%03X\n",
+                                 executed, gp_dsp.program_counter());
+                    reported_execution = true;
+                }
+                if (trace && ++worker_iterations % 1000 == 0) {
+                    std::fprintf(stderr,
+                                 "[APU DSP GP] worker checkpoint PC=0x%03X P=%06X/%06X/%06X executed=%zu\n",
+                                 gp_dsp.program_counter(),
+                                 gp_dsp.program_word(gp_dsp.program_counter()),
+                                 gp_dsp.program_word(gp_dsp.program_counter() + 1),
+                                 gp_dsp.program_word(gp_dsp.program_counter() + 2), executed);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        });
+    } catch (...) {
+        apu_worker_running.store(false, std::memory_order_release);
+        return false;
+    }
+    return true;
+}
+
+void apu_stop_worker() {
+    if (!apu_worker_running.exchange(false, std::memory_order_acq_rel)) return;
+    if (apu_worker.joinable()) apu_worker.join();
 }
 
 bool apu_gp_program_read(uint32_t address, uint32_t& value) {
