@@ -1,6 +1,7 @@
 #include <sys/mman.h>
 #include <cerrno>
 #include "hal.hpp"
+#include "mmio.hpp"
 #include "../kernel.hpp"
 #include <cstdio>
 #include <cstring>
@@ -139,6 +140,9 @@ extern "C" void __attribute__((__stdcall__)) xbox_HalReturnToFirmware(uint32_t R
             printf("[HAL] APIC MMIO 0xFEC00000 mmap BASARISIZ! (Hata: %s)\n", strerror(errno));
         } else {
             printf("[HAL] APIC MMIO sahte donanim alani (0xFEC00000 - 64KB) basariyla eslendi.\n");
+            if (!mmio_initialize_interrupt_controller()) {
+                printf("[HAL] APIC MMIO yazma izlemesi basarisiz.\n");
+            }
         }
 
 

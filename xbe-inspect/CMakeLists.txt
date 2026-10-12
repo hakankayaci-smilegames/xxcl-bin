@@ -31,4 +31,10 @@ if(BUILD_TESTING)
         src/kernel/vfs.cpp
     )
     add_test(NAME io_contract_tests COMMAND io_contract_tests)
+
+    add_executable(mmio_contract_tests
+        tests/mmio_contract_tests.cpp
+        src/kernel/mmio.cpp
+    )
+    add_test(NAME mmio_contract_tests COMMAND mmio_contract_tests)
 endif()

@@ -2,6 +2,7 @@
 #include "kernel.hpp"
 #include "kernel/kpcr.hpp"
 #include "kernel/vfs.hpp"
+#include "kernel/mmio.hpp"
 #include <iostream>
 #include <fstream>
 #include <sys/mman.h>
@@ -41,6 +42,8 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
     // i386 (32-bit) ucontext_t structure
     uintptr_t eip = context->uc_mcontext.gregs[REG_EIP];
     uintptr_t fault_addr = reinterpret_cast<uintptr_t>(info->si_addr);
+
+    if (xbe::kernel::mmio_handle_write_fault(fault_addr, context)) return;
 
 
     // Donanim IO Port erisimi (IN/OUT) ve Privileged Command (WBINVD) simulasyonu
@@ -141,6 +144,11 @@ static void sigsegv_handler(int sig, siginfo_t* info, void* ucontext) {
     _exit(1);
 }
 
+static void sigtrap_handler(int, siginfo_t*, void* raw_context) {
+    if (xbe::kernel::mmio_complete_write(reinterpret_cast<ucontext_t*>(raw_context))) return;
+    _exit(1);
+}
+
 bool load_and_run(const ParseResult& res, const std::string& filepath) {
     if (!res.valid) return false;
 
@@ -150,6 +158,8 @@ bool load_and_run(const ParseResult& res, const std::string& filepath) {
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = sigsegv_handler;
     sigaction(SIGSEGV, &sa, nullptr);
+    sa.sa_sigaction = sigtrap_handler;
+    sigaction(SIGTRAP, &sa, nullptr);
 
     // Sanal bellek tahsisi icin max VA'i bulalim
     uint32_t min_va = res.base_address;

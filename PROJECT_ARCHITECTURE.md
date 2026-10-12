@@ -18,12 +18,14 @@ xbe-inspect/
 │   │   ├── ps.cpp                 # Xbox process/thread compatibility
 │   │   ├── kpcr.cpp/.hpp          # Per-host-thread Xbox processor control region setup
 │   │   ├── mm.cpp                 # Xbox memory manager compatibility
+│   │   ├── mmio.cpp/.hpp          # Trapped hardware-register writes and synchronous acknowledgements
 │   │   ├── hal.cpp                # Hardware abstraction and fault compatibility
 │   │   └── ...                    # Other kernel export families
 │   └── video/                     # Graphics backends and stubs
 └── tests/
     ├── vfs_contract_tests.cpp     # Host-root, path mapping and symbolic-link contracts
-    └── io_contract_tests.cpp      # Handle, disposition, offset and query contracts
+    ├── io_contract_tests.cpp      # Handle, disposition, offset and query contracts
+    └── mmio_contract_tests.cpp    # MMIO readiness, command acknowledgement and register writes
 ```
 
 ## I/O ownership boundaries
@@ -36,10 +38,10 @@ xbe-inspect/
 
 ## Execution and memory model
 
-The loader maps the XBE at its expected virtual addresses, applies section permissions, resolves imported kernel ordinals, initializes the Xbox KPCR, and invokes the entry point. Memory-manager and HAL modules provide the guest address-space and hardware-compatibility behavior. Thread creation must initialize a valid per-thread KPCR/TLS context and return handles that agree with `NtClose` semantics.
+The loader maps the XBE at its expected virtual addresses, applies section permissions, resolves imported kernel ordinals, initializes the Xbox KPCR, and invokes the entry point. Memory-manager and HAL modules provide the guest address-space and hardware-compatibility behavior. Thread creation must initialize a valid per-thread KPCR/TLS context and return handles that agree with `NtClose` semantics. The MMIO component traps writes to the mapped interrupt-controller page, replays the original guest instruction, and completes synchronous command acknowledgements before the guest resumes. APU DMA buffers still need a physical-address-aware device backend.
 
 ## Current integration checkpoint
 
-The generic VFS/file contract checks pass. On a fresh isolated root, Sega GT's first launch creates `TDATA` and `UDATA` title data and requests a reboot. The second launch passes language and graphics initialization, then faults at XBE address `0x0015F8DB` in DSOUND after 2,357 kernel calls. This reproduces the older audio-path checkpoint with fresh evidence. The next investigation belongs in the general audio or memory contract reached by the DSOUND caller.
+The generic VFS/file/MMIO contract checks pass. On a fresh isolated root, Sega GT's first launch creates `TDATA` and `UDATA` title data and requests a reboot. The second launch passes language and graphics initialization. MMIO acknowledgement lets the DSOUND audio factory succeed and moves execution past its former null dereference at `0x0015F8DB`. It now waits at `0x00162E2A` for an APU DMA command word to be cleared. The next investigation belongs in contiguous-memory physical mapping and an APU DMA device contract.
 
 The architecture goal is reusable Xbox compatibility behavior across titles. Title-specific device responses belong in device backends only where a device protocol requires them, not in generic VFS or file-handle code.
