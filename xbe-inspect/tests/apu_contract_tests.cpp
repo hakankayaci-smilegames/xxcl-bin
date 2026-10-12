@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <array>
 #include <sys/mman.h>
 
 int main() {
@@ -41,6 +42,48 @@ int main() {
     if (!xbe::kernel::apu_queue_mmio_write(base + 0x20808, 0x0096A000)) return 1;
     if (xbe::kernel::apu_process_mmio_writes() != 2) return 1;
     if (entries[0x7FF * 2] != 0x00964000) return 1;
+
+    constexpr uint32_t dma_table_physical = 0x00950000;
+    constexpr uint32_t dma_pages_physical = 0x00960000;
+    void* dma_table = nullptr;
+    void* dma_pages = nullptr;
+    if (posix_memalign(&dma_table, 0x1000, 0x1000) != 0 ||
+        posix_memalign(&dma_pages, 0x1000, 0x2000) != 0) return 1;
+    std::memset(dma_table, 0, 0x1000);
+    std::memset(dma_pages, 0, 0x2000);
+    if (xbe::kernel::physical_memory_register(dma_table, 0x1000, 0x1000,
+                                               dma_table_physical, 0x00950FFF) != dma_table_physical ||
+        xbe::kernel::physical_memory_register(dma_pages, 0x2000, 0x1000,
+                                               dma_pages_physical, 0x00961FFF) != dma_pages_physical) return 1;
+    auto* dma_entries = static_cast<uint32_t*>(dma_table);
+    dma_entries[0] = dma_pages_physical;
+    dma_entries[2] = dma_pages_physical + 0x1000;
+    auto* guest_bytes = static_cast<uint8_t*>(dma_pages);
+    guest_bytes[0xFFE] = 0x11;
+    guest_bytes[0xFFF] = 0x22;
+    guest_bytes[0x1000] = 0x33;
+    guest_bytes[0x1001] = 0x44;
+
+    std::array<std::byte, 4> transfer{};
+    if (!xbe::kernel::apu_sge_transfer(dma_table_physical, 1, 0xFFE, transfer, false)) return 1;
+    if (transfer != std::array<std::byte, 4>{std::byte{0x11}, std::byte{0x22},
+                                             std::byte{0x33}, std::byte{0x44}}) return 1;
+    transfer = {std::byte{0xA1}, std::byte{0xA2}, std::byte{0xA3}, std::byte{0xA4}};
+    if (!xbe::kernel::apu_sge_transfer(dma_table_physical, 1, 0xFFE, transfer, true)) return 1;
+    if (guest_bytes[0xFFE] != 0xA1 || guest_bytes[0xFFF] != 0xA2 ||
+        guest_bytes[0x1000] != 0xA3 || guest_bytes[0x1001] != 0xA4) return 1;
+    transfer.fill(std::byte{0x55});
+    if (xbe::kernel::apu_sge_transfer(dma_table_physical, 0, 0xFFE, transfer, false)) return 1;
+    if (transfer != std::array<std::byte, 4>{std::byte{0x55}, std::byte{0x55},
+                                             std::byte{0x55}, std::byte{0x55}}) return 1;
+    if (xbe::kernel::apu_sge_transfer(dma_table_physical, 0, 0xFFE, transfer, true)) return 1;
+    if (guest_bytes[0xFFE] != 0xA1 || guest_bytes[0xFFF] != 0xA2 ||
+        guest_bytes[0x1000] != 0xA3 || guest_bytes[0x1001] != 0xA4) return 1;
+
+    xbe::kernel::physical_memory_unregister(dma_pages);
+    xbe::kernel::physical_memory_unregister(dma_table);
+    std::free(dma_pages);
+    std::free(dma_table);
 
     xbe::kernel::physical_memory_unregister(sge_table);
     std::free(sge_table);
