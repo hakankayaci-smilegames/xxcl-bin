@@ -205,6 +205,12 @@ ApuDspCore::StepResult ApuDspCore::step() {
         advance_program_counter(program_counter_ + 1);
         return StepResult::executed;
     }
+    // JMP xxx uses the low 12 instruction bits as a zero-extended P-space target.
+    if ((instruction & 0x00FFF000) == 0x000C1000) {
+        advance_program_counter(instruction & 0x0FFF);
+        return StepResult::executed;
+    }
+
     if (instruction == 0x000D1080) { // BSR xxxx
         if (program_counter_ + 1 >= program_word_count ||
             stack_depth_ >= return_stack_.size()) {

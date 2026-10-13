@@ -49,6 +49,14 @@ int main() {
         core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.program_counter() != 2 || core.register_word(57) != 0x14) return 28;
 
+    // DSP56300 short JMP uses the instruction's low 12 bits as an absolute P address.
+    words[0] = 0x00200013; // CLR A -> SR=0x14
+    words[1] = 0x000C1FF8; // JMP P:$FF8
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 0xFF8 || core.register_word(57) != 0x14) return 29;
+
     // The observed GP firmware starts with JSR (absolute), then returns from
     // its subroutine with RTS. Exercise the architectural call/return contract.
     words[0] = 0x000BF080;
