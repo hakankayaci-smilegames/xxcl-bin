@@ -4,9 +4,9 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`), unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`), kısa koşullu `BCC` ve `SUB X0,A` desteği eklendi. Önceki sürüm `CMPU` komutunu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP, `PC=0x041`’deki çıkarma komutunu geçip DMA bitişini bekleyen `PC=0x121` döngüsüne ulaştı. İzde DMA EOL bayrağının (`X:$C5` bit 7) set edilip temizlendiği görüldü. GPU overlay’ına worker’ın gördüğü kuyruk hareketi sayacı eklendi; son temiz koşuda bir hareket yakalandı (`GET 0x000000 → PUT 0x73D8000`). Worker hâlâ komutları yürütmüyor, yalnızca GET’i PUT’a eşitliyor; bu nedenle ilk çizim için pushbuffer’ın içeriğini çözmek gerekiyor. Bu, oyuna özel bir geçiş değil, ortak DSP komut desteğinin ölçümüdür.
+XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`), unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`), kısa koşullu `BCC` ve `SUB X0,A` desteği eklendi. Önceki sürüm `CMPU` komutunu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP, `PC=0x041`’deki çıkarma komutunu geçip DMA bitişini bekleyen `PC=0x121` döngüsüne ulaştı. İzde DMA EOL bayrağının (`X:$C5` bit 7) set edilip temizlendiği görüldü. Önceki NV2A sayaç ölçümü yanlış USER adres alanını okuduğu için geçersizdir. PFIFO kayıtlarını düzelttik; yeni çalışmada DSP ve GPU ilerlemesi tekrar doğrulanacak.
 
-SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler ve pushbuffer komutlarını ayrıştırmaz; oyun grafikleri henüz çizilmiyor. GET=PUT yalnızca kuyruğun o anda boş olduğunu gösterir. Overlay’daki `GPU PULLS` sayacı, worker’ın GET ile PUT arasında fark gördüğü seferleri gösterir; bu komutların işlendiği anlamına gelmez.
+SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Önceki tanı kodu yanlışlıkla `0xFD800040/44` USER alanını FIFO DMA işaretçileri sanmış ve GET'i PUT'a kopyalamıştı; bu sonuçlar geçersizdir. Worker artık NV2A PFIFO DMA kayıtlarını (`0xFD003240/244`) ve STATUS'u (`0xFD003214`) gözlemler, register'ları ilerletmez veya sahte busy durumu temizlemez. `GPU PENDING` sayacı, yeni GET/PUT farkı gözlem örneklerini sayar; pushbuffer komutlarının işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
 
 ## 🏗️ Mimari ve Şematik (Architecture)
 
@@ -83,8 +83,8 @@ flowchart TD
   - `0xFE800000` (APU) ve `0xFEC00000` (APIC) aralıklarındaki register erişimlerinden kaynaklı çökmeler çözüldü. Bu alanlar allocate edilerek null-pointer/segfault okumaları güvenli hale getirildi.
 - **Linux Heap Çökmelerinin Giderilmesi (Memory Tracking)**: 
   - `ExAllocatePool` üzerinden alınan bellekleri oyun sınır dışına (out-of-bounds) taşırarak Linux glibc heap yapısını bozuyordu (malloc/free assertion failure). Tüm tahsislere `4096 bayt` padding eklendi ve gerçek boyutları `unordered_map` ile takip edilerek (`MmQueryAllocationSize` vb.) glibc'nin çökmesi %100 engellendi.
-- **NV2A FIFO Asenkron Worker (`nv2a.cpp`)**: 
-  - Sega GT 2002 GPU/NV2A donanımına (PFIFO CACHE1 STATUS - `0xFD100410`) yazıp FIFO'nun boşalmasını beklerken (spin-loop) %100 CPU harcayarak kilitleniyordu. Bir arka plan `pthread` yaratıldı, bu thread düzenli olarak GPU register'ını "işi bitmiş/boş" (busy=0) şeklinde güncelleyerek oyun döngüsünün kırılıp devam etmesi sağlandı.
+- **NV2A tanılama worker'ı (`nv2a.cpp`)**:
+  - Worker, gerçek PFIFO DMA GET/PUT ve STATUS kayıtlarını izler. Daha önceki `0xFD100410` busy-bit temizleme ve `0xFD800040/44` GET/PUT okumaları yanlış adreslere gidiyordu; bunlar kaldırıldı. FIFO komut yürütmesi henüz uygulanmadı.
 - **Host tanılama overlay'i (`video/window.cpp`)**:
   - Host FPS/frametime ile APU DSP ve NV2A FIFO sayaçlarını gösterir. Bu değerler emülatör döngüsünü izler; Xbox oyununun gerçek çizim hızı olarak yorumlanmamalıdır.
 - **Fiziksel Adres Maskelemesi**:

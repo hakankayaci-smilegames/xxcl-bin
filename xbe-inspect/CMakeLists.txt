@@ -71,4 +71,7 @@ if(BUILD_TESTING)
         src/kernel/physical_memory.cpp
     )
     add_test(NAME physical_memory_contract_tests COMMAND physical_memory_contract_tests)
+
+    add_executable(nv2a_contract_tests tests/nv2a_contract_tests.cpp)
+    add_test(NAME nv2a_contract_tests COMMAND nv2a_contract_tests)
 endif()
