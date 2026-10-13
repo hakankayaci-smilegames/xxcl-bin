@@ -205,9 +205,37 @@ ApuDspCore::StepResult ApuDspCore::step() {
         advance_program_counter(program_counter_ + 1);
         return StepResult::executed;
     }
-    // JMP xxx uses the low 12 instruction bits as a zero-extended P-space target.
-    if ((instruction & 0x00FFF000) == 0x000C1000) {
-        advance_program_counter(instruction & 0x0FFF);
+    // CMPU S1,S2 compares an unsigned 24-bit register (aligned to bits 47:24)
+    // with the low 48 bits of accumulator A or B, updating condition flags only.
+    if ((instruction & 0x00FFFF00) == 0x000C1F00) {
+        const uint32_t source_code = (instruction >> 1) & 7;
+        const uint32_t destination_code = instruction & 1;
+        uint32_t source_register = 0;
+        if (source_code == 0) {
+            source_register = destination_code == 0 ? 15 : 14;
+        } else if (source_code >= 4) {
+            source_register = source_code;
+        } else {
+            return StepResult::unsupported_instruction;
+        }
+        const uint32_t destination = destination_code == 0 ? 8 : 9;
+        const uint64_t accumulator =
+            (static_cast<uint64_t>(registers_[destination + 4] & dsp_word_mask) << 24) |
+            (registers_[destination] & dsp_word_mask);
+        const uint64_t source =
+            static_cast<uint64_t>(registers_[source_register] & dsp_word_mask) << 24;
+        constexpr uint64_t mask48 = (uint64_t{1} << 48) - 1;
+        const uint64_t result = (accumulator - source) & mask48;
+        constexpr uint32_t sr_c = 1u << 0;
+        constexpr uint32_t sr_v = 1u << 1;
+        constexpr uint32_t sr_z = 1u << 2;
+        constexpr uint32_t sr_n = 1u << 3;
+        uint32_t status = registers_[57] & ~(sr_c | sr_v | sr_z | sr_n);
+        if (accumulator < source) status |= sr_c;
+        if ((result & (uint64_t{1} << 47)) != 0) status |= sr_n;
+        if (result == 0) status |= sr_z;
+        registers_[57] = status;
+        advance_program_counter(program_counter_ + 1);
         return StepResult::executed;
     }
 

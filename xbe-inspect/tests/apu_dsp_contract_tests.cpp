@@ -49,13 +49,15 @@ int main() {
         core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.program_counter() != 2 || core.register_word(57) != 0x14) return 28;
 
-    // DSP56300 short JMP uses the instruction's low 12 bits as an absolute P address.
-    words[0] = 0x00200013; // CLR A -> SR=0x14
-    words[1] = 0x000C1FF8; // JMP P:$FF8
+    // CMPU X0,A computes the unsigned comparison and updates CCR without storing A.
+    words[0] = 0x0044F400; // MOVE #$001000, X0
+    words[1] = 0x00001000;
+    words[2] = 0x000C1FF8; // CMPU X0,A
     if (!core.bootstrap(table_physical, 1) ||
         core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
-        core.program_counter() != 0xFF8 || core.register_word(57) != 0x14) return 29;
+        core.program_counter() != 3 || core.register_word(4) != 0x1000 ||
+        (core.register_word(57) & 0x0D) != 0x09 || core.register_word(8) != 0) return 29;
 
     // The observed GP firmware starts with JSR (absolute), then returns from
     // its subroutine with RTS. Exercise the architectural call/return contract.

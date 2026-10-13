@@ -4,7 +4,7 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. NXP DSP56300 Family Manual’daki tek kelimelik NOP (`0x000000`) ve kısa JMP (`0x0C1FF8`, hedef `P:$FF8`) genel olarak destekleniyor; ikisi de sözleşme testleriyle doğrulandı. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP `PC=0x03E` noktasındaki JMP ile `P:$FF8`’e geçti ve boş program alanında ilerleyerek `PC=0x1000` program sınırında durdu (27.049 instruction). Bu checkpoint oyun özelinde bir geçiş değildir; sıradaki DSP program alanı davranışını belirlemek için kullanılan entegrasyon kanıtıdır.
+XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`) ve unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`) destekleniyor. Önceki sürüm bu ikinci komutu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta CMPU, `PC=0x03E`’ten `PC=0x03F`’e ilerledi; 27.041 DSP komutundan sonra sıradaki desteklenmeyen komut `P[0x03F]=0x059405` noktasında durdu. Bu, oyuna özel bir geçiş değil, ortak DSP komut desteğinin ölçümüdür.
 
 SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler; pushbuffer komutları ayrıştırılmadığı için oyun grafikleri henüz çizilmiyor.
 
@@ -99,7 +99,7 @@ flowchart TD
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
 1. **GP DSP firmware yürütmesi**:
-   - NOP ve kısa JMP (`0x0C1FF8`) genel olarak uygulanıp test edildi. JMP, `P:$FF8`’e atlıyor; üst program alanında yürütme devam edip `PC=0x1000` model sınırına ulaşıyor. Sıradaki adım geçerli DSP P-space/ROM haritasını doğrulamak; ses komut tamamlama davranışı gerçek APU/DSP olaylarına bağlanmalı.
+   - NOP ve `CMPU X0,A` (`0x0C1FF8`) genel davranışları sözleşme testiyle kapsandı. Sega GT geçici HDD koşusunda DSP `PC=0x03F`, `P=0x059405` noktasına ulaştı. Sıradaki adım bu gerçek DSP komutunu çözümleyip genel olarak uygulamak; bunu geçtikten sonra ses komut tamamlama davranışını gerçek APU/DSP olaylarına bağlamak gerekiyor.
 2. **D3D ve NV2A gerçek çizimi**:
    - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
 3. **Gamepad / Input entegrasyonu**:
