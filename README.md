@@ -4,7 +4,7 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. Son Sega GT entegrasyon koşusu DSP firmware'ini `PC=0x171` noktasına kadar ilerletti; burada henüz desteklenmeyen `P=0x000000` komutunda duruyor. Bu checkpoint oyun özelinde bir geçiş değildir; sıradaki DSP davranışını belirlemek için kullanılan entegrasyon kanıtıdır.
+XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. NXP DSP56300 Family Manual’a göre tek kelimelik NOP olan `P=0x000000` artık genel olarak destekleniyor ve sözleşme testiyle doğrulandı. Temiz geçici HDD kökündeki ilk açılış reboot istedi; sonraki açılışta firmware 27.040 instruction yürütüp `PC=0x03E`, `P=0x0C1FF8` noktasında durdu. Bu checkpoint oyun özelinde bir geçiş değildir; sıradaki DSP davranışını belirlemek için kullanılan entegrasyon kanıtıdır.
 
 SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler; pushbuffer komutları ayrıştırılmadığı için oyun grafikleri henüz çizilmiyor.
 
@@ -99,7 +99,7 @@ flowchart TD
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
 1. **GP DSP firmware yürütmesi**:
-   - Güncel checkpoint `PC=0x171`, `P=0x000000`. Önce komutun DSP56300 anlamı belirlenip oyun bağımsız sözleşme testiyle uygulanmalı; ses komut tamamlama davranışı gerçek APU/DSP olaylarına bağlanmalı.
+   - NOP (`0x000000`) tek kelime tüketip PC’yi artırıyor ve SR’yi koruyor; oyun bağımsız sözleşme testi geçiyor. Son izole ikinci açılışın checkpoint’i `PC=0x03E`, `P=0x0C1FF8`; sıradaki komutun anlamı çözülüp genel testle eklenmeli. Ses komut tamamlama davranışı gerçek APU/DSP olaylarına bağlanmalı.
 2. **D3D ve NV2A gerçek çizimi**:
    - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
 3. **Gamepad / Input entegrasyonu**:

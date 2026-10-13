@@ -201,6 +201,10 @@ ApuDspCore::StepResult ApuDspCore::step() {
     }
 
     const uint32_t instruction = program_[program_counter_] & dsp_word_mask;
+    if (instruction == 0) { // NOP: one P-space word, condition codes unchanged
+        advance_program_counter(program_counter_ + 1);
+        return StepResult::executed;
+    }
     if (instruction == 0x000D1080) { // BSR xxxx
         if (program_counter_ + 1 >= program_word_count ||
             stack_depth_ >= return_stack_.size()) {

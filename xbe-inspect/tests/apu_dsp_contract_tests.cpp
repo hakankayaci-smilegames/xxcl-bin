@@ -40,6 +40,15 @@ int main() {
 
     if (core.program_word(xbe::kernel::ApuDspCore::program_word_count) != 0) return 1;
 
+    // DSP56300 NOP is a one-word instruction: it advances PC and preserves SR.
+    words[0] = 0x00200013; // CLR A -> SR=0x14
+    words[1] = 0x00000000; // NOP
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 1 || core.register_word(57) != 0x14 ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 2 || core.register_word(57) != 0x14) return 28;
+
     // The observed GP firmware starts with JSR (absolute), then returns from
     // its subroutine with RTS. Exercise the architectural call/return contract.
     words[0] = 0x000BF080;
