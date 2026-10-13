@@ -6,6 +6,12 @@
 
 namespace xbe::kernel {
 
+struct ApuDspDebugStats {
+    uint32_t program_counter = 0;
+    uint32_t program_words[3] = {};
+    uint64_t instructions_executed = 0;
+};
+
 // Initialize register defaults for the memory-mapped APU device.
 bool apu_initialize();
 bool apu_queue_mmio_write(uintptr_t address, uint32_t value);
@@ -13,6 +19,7 @@ size_t apu_process_mmio_writes(size_t max_writes = static_cast<size_t>(-1));
 // Run up to instruction_budget GP DSP instructions; execution stops at the
 // first unsupported instruction so missing firmware support stays observable.
 size_t apu_run_gp_dsp(uint32_t instruction_budget);
+ApuDspDebugStats apu_gp_dsp_debug_stats();
 bool apu_start_worker();
 void apu_stop_worker();
 

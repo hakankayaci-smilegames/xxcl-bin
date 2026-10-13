@@ -61,6 +61,7 @@ uint32_t gp_max_sge = 0;
 uint32_t gp_reset_value = 0;
 ApuDspCore gp_dsp;
 std::atomic<bool> apu_worker_running{false};
+std::atomic<uint64_t> gp_dsp_instructions_executed{0};
 std::thread apu_worker;
 uint32_t last_reported_dsp_fault_pc = UINT32_MAX;
 uint32_t last_reported_dsp_fault_instruction = UINT32_MAX;
@@ -252,7 +253,19 @@ size_t apu_run_gp_dsp(uint32_t instruction_budget) {
         }
         ++executed;
     }
+    gp_dsp_instructions_executed.fetch_add(executed, std::memory_order_relaxed);
     return executed;
+}
+
+ApuDspDebugStats apu_gp_dsp_debug_stats() {
+    ApuDspDebugStats stats;
+    stats.program_counter = gp_dsp.program_counter();
+    stats.program_words[0] = gp_dsp.program_word(stats.program_counter);
+    stats.program_words[1] = gp_dsp.program_word(stats.program_counter + 1);
+    stats.program_words[2] = gp_dsp.program_word(stats.program_counter + 2);
+    stats.instructions_executed =
+        gp_dsp_instructions_executed.load(std::memory_order_relaxed);
+    return stats;
 }
 
 bool apu_start_worker() {

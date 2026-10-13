@@ -1,4 +1,5 @@
 #include "window.hpp"
+#include "../kernel/apu.hpp"
 #include <SDL2/SDL.h>
 #include <cstdio>
 
@@ -39,6 +40,14 @@ void video_poll_events() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) {
+            xbe::kernel::apu_stop_worker();
+            const auto stats = xbe::kernel::apu_gp_dsp_debug_stats();
+            std::printf("[DEBUG] DSP instructions=%llu PC=0x%03X\n",
+                        static_cast<unsigned long long>(stats.instructions_executed),
+                        stats.program_counter);
+            std::printf("[DEBUG] P[PC..PC+2]=%06X/%06X/%06X\n",
+                        stats.program_words[0], stats.program_words[1],
+                        stats.program_words[2]);
             printf("[VIDEO] Pencere kapatildi.\n");
             exit(0);
         }
