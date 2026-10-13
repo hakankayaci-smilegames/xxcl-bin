@@ -4,9 +4,9 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`), unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`) ve kısa koşullu `BCC` desteği eklendi. Önceki sürüm `CMPU` komutunu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP, `PC=0x03F`’teki LT koşullu dalı geçip `PC=0x041`’e ilerledi; 27.043 komuttan sonra sıradaki desteklenmeyen komut `P[0x041]=0x547000` noktasında durdu. Bu, oyuna özel bir geçiş değil, ortak DSP komut desteğinin ölçümüdür.
+XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`), unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`), kısa koşullu `BCC` ve `SUB X0,A` desteği eklendi. Önceki sürüm `CMPU` komutunu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP, `PC=0x041`’deki çıkarma komutunu geçip DMA bitişini bekleyen `PC=0x121` döngüsüne ulaştı. İzde DMA EOL bayrağının (`X:$C5` bit 7) set edilip temizlendiği görüldü; son örnekte 298.782.000 DSP komutu işlendi. Pencere kapanırken NV2A FIFO GET ve PUT eşitti. Worker şu an GET’i PUT’a kopyalayıp komutları yürütmediği için bu tek başına oyun komutu gönderilmediğini kanıtlamaz. Bu, oyuna özel bir geçiş değil, ortak DSP komut desteğinin ölçümüdür.
 
-SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler; pushbuffer komutları ayrıştırılmadığı için oyun grafikleri henüz çizilmiyor.
+SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler ve pushbuffer komutlarını ayrıştırmaz; oyun grafikleri henüz çizilmiyor. GET=PUT yalnızca kuyruğun o anda boş olduğunu gösterir; gönderim olup olmadığını anlamak için sayaç eklenmesi gerekiyor.
 
 ## 🏗️ Mimari ve Şematik (Architecture)
 
@@ -99,7 +99,7 @@ flowchart TD
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
 1. **GP DSP firmware yürütmesi**:
-   - NOP, `CMPU X0,A` ve tüm koşul kodlarını değerlendiren kısa `BCC` davranışı sözleşme testleriyle kapsandı. Sega GT geçici HDD koşusunda DSP `PC=0x041`, `P=0x547000` noktasına ulaştı. Sıradaki adım bu komutu çözümleyip genel olarak uygulamak; ses komut tamamlama davranışını daha sonra gerçek APU/DSP olaylarına bağlamak gerekiyor.
+   - NOP, `CMPU X0,A`, kısa `BCC` ve `SUB X0,A` davranışları sözleşme testleriyle kapsandı. Sega GT geçici HDD koşusunda DSP, DMA EOL bayrağını bekleyen `PC=0x121` döngüsüne ulaştı. Sıradaki çizim odaklı adım, guest’in NV2A FIFO’ya komut gönderip göndermediğini izlemek ve ilk genel pushbuffer clear yolunu belirlemek.
 2. **D3D ve NV2A gerçek çizimi**:
    - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
 3. **Gamepad / Input entegrasyonu**:

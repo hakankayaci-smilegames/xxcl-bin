@@ -74,6 +74,24 @@ int main() {
         core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
         core.program_counter() != 4) return 31;
 
+    // PM5 absolute MOVE A1,X:(xxxx) consumes its address extension word.
+    words[0] = 0x00547000;
+    words[1] = 0x00001234;
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 2 || core.data_word(false, 0x1234) != 0) return 32;
+
+    // PM2 SUB X0,A sign-aligns X0, stores the 56-bit result, and updates CCR.
+    words[0] = 0x0044F400; // MOVE #$001000, X0
+    words[1] = 0x00001000;
+    words[2] = 0x00200044; // SUB X0,A
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 3 || core.register_word(8) != 0 ||
+        core.register_word(12) != 0xFFF000 || core.register_word(10) != 0xFF ||
+        (core.register_word(57) & 0x0F) != 0x09) return 33;
+
     // The observed GP firmware starts with JSR (absolute), then returns from
     // its subroutine with RTS. Exercise the architectural call/return contract.
     words[0] = 0x000BF080;

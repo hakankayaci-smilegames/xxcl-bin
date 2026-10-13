@@ -772,6 +772,48 @@ ApuDspCore::StepResult ApuDspCore::step() {
         return StepResult::executed;
     }
 
+    // PM2 SUB X0,A stores the 56-bit subtraction result in A and updates CCR.
+    if ((instruction & 0x00FC00FF) == 0x00200044) {
+        const uint32_t parallel_source = (instruction >> 13) & 0x1F;
+        const uint32_t parallel_destination = (instruction >> 8) & 0x1F;
+        const uint32_t parallel_value = read_data_register(
+            static_cast<uint8_t>(parallel_source));
+        const uint64_t accumulator =
+            (static_cast<uint64_t>(registers_[10] & 0xFF) << 48) |
+            (static_cast<uint64_t>(registers_[12] & dsp_word_mask) << 24) |
+            (registers_[8] & dsp_word_mask);
+        uint64_t source =
+            static_cast<uint64_t>(registers_[4] & dsp_word_mask) << 24;
+        if ((registers_[4] & (1u << 23)) != 0) {
+            source |= uint64_t{0xFF} << 48;
+        }
+        const uint64_t raw_result = accumulator - source;
+        constexpr uint64_t mask56 = (uint64_t{1} << 56) - 1;
+        const uint64_t result = raw_result & mask56;
+        constexpr uint32_t sr_c = 1u << 0;
+        constexpr uint32_t sr_v = 1u << 1;
+        constexpr uint32_t sr_z = 1u << 2;
+        constexpr uint32_t sr_n = 1u << 3;
+        constexpr uint32_t sr_l = 1u << 6;
+        const bool source_sign = (source & (uint64_t{1} << 55)) != 0;
+        const bool accumulator_sign = (accumulator & (uint64_t{1} << 55)) != 0;
+        const bool result_sign = (result & (uint64_t{1} << 55)) != 0;
+        const bool overflow = (source_sign != accumulator_sign) &&
+                              (result_sign != accumulator_sign);
+        uint32_t status = registers_[57] & ~(sr_c | sr_v | sr_z | sr_n);
+        if ((raw_result & (uint64_t{1} << 56)) != 0) status |= sr_c;
+        if (overflow) status |= sr_v | sr_l;
+        if (result_sign) status |= sr_n;
+        if (result == 0) status |= sr_z;
+        registers_[57] = status;
+        registers_[10] = static_cast<uint32_t>((result >> 48) & 0xFF);
+        registers_[12] = static_cast<uint32_t>((result >> 24) & dsp_word_mask);
+        registers_[8] = static_cast<uint32_t>(result & dsp_word_mask);
+        write_data_register(static_cast<uint8_t>(parallel_destination), parallel_value);
+        advance_program_counter(program_counter_ + 1);
+        return StepResult::executed;
+    }
+
     if ((instruction & 0x00FC0000) == 0x00200000 && (instruction & 0xFF) == 0) {
         const uint32_t source = (instruction >> 13) & 0x1F;
         const uint32_t destination = (instruction >> 8) & 0x1F;
