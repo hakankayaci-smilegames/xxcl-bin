@@ -36,6 +36,36 @@ ApuDspDma::Register dma_register_for_peripheral(uint8_t address) {
     }
 }
 
+bool dsp_condition_true(uint8_t condition, uint32_t status) {
+    const bool c = (status & (1u << 0)) != 0;
+    const bool v = (status & (1u << 1)) != 0;
+    const bool z = (status & (1u << 2)) != 0;
+    const bool n = (status & (1u << 3)) != 0;
+    const bool u = (status & (1u << 4)) != 0;
+    const bool e = (status & (1u << 5)) != 0;
+    const bool l = (status & (1u << 6)) != 0;
+    const bool signed_less = n != v;
+    switch (condition & 0x0F) {
+    case 0x0: return !c;                       // CC
+    case 0x1: return !signed_less;             // GE
+    case 0x2: return !z;                       // NE
+    case 0x3: return !n;                       // PL
+    case 0x4: return !z && (u || e);           // NN
+    case 0x5: return !e;                       // EC
+    case 0x6: return !l;                       // LC
+    case 0x7: return !z && !signed_less;       // GT
+    case 0x8: return c;                        // CS
+    case 0x9: return signed_less;              // LT
+    case 0xA: return z;                        // EQ
+    case 0xB: return n;                        // MI
+    case 0xC: return z || (!u && !e);          // NR
+    case 0xD: return e;                        // ES
+    case 0xE: return l;                        // LS
+    case 0xF: return z || signed_less;         // LE
+    }
+    return false;
+}
+
 } // namespace
 
 bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
@@ -203,6 +233,22 @@ ApuDspCore::StepResult ApuDspCore::step() {
     const uint32_t instruction = program_[program_counter_] & dsp_word_mask;
     if (instruction == 0) { // NOP: one P-space word, condition codes unchanged
         advance_program_counter(program_counter_ + 1);
+        return StepResult::executed;
+    }
+    // BCC xxx: signed 9-bit PC-relative displacement, based on current PC.
+    constexpr uint32_t bcc_short_mask = 0x00FF0C20;
+    constexpr uint32_t bcc_short_value = 0x00050400;
+    if ((instruction & bcc_short_mask) == bcc_short_value) {
+        const uint32_t encoded_displacement = (instruction & 0x1F) |
+            ((instruction & 0x3C0) >> 1);
+        const int32_t displacement = (encoded_displacement & 0x100) != 0
+            ? static_cast<int32_t>(encoded_displacement) - 0x200
+            : static_cast<int32_t>(encoded_displacement);
+        const uint8_t condition = static_cast<uint8_t>((instruction >> 12) & 0x0F);
+        const uint32_t next_address = dsp_condition_true(condition, registers_[57])
+            ? static_cast<uint32_t>(static_cast<int32_t>(program_counter_) + displacement) & 0x0FFF
+            : program_counter_ + 1;
+        advance_program_counter(next_address);
         return StepResult::executed;
     }
     // CMPU S1,S2 compares an unsigned 24-bit register (aligned to bits 47:24)

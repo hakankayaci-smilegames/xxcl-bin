@@ -59,6 +59,21 @@ int main() {
         core.program_counter() != 3 || core.register_word(4) != 0x1000 ||
         (core.register_word(57) & 0x0D) != 0x09 || core.register_word(8) != 0) return 29;
 
+    // BCC LT uses N xor V and adds the signed short displacement to current PC.
+    words[3] = 0x00059405; // BCC LT +5
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 8) return 30;
+
+    words[3] = 0x00051405; // BCC GE +5
+    if (!core.bootstrap(table_physical, 1) ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        core.program_counter() != 4) return 31;
+
     // The observed GP firmware starts with JSR (absolute), then returns from
     // its subroutine with RTS. Exercise the architectural call/return contract.
     words[0] = 0x000BF080;
