@@ -59,6 +59,18 @@ void nv2a_stop_worker() {
     pthread_join(g_nv2a_worker_th, nullptr);
 }
 
+Nv2aDebugStats nv2a_debug_stats() {
+    Nv2aDebugStats stats;
+    stats.worker_running = g_nv2a_running.load();
+    if (!stats.worker_running) return stats;
+
+    auto* channel_user_get = reinterpret_cast<volatile uint32_t*>(0xFD800044);
+    auto* channel_user_put = reinterpret_cast<volatile uint32_t*>(0xFD800040);
+    stats.fifo_get = *channel_user_get;
+    stats.fifo_put = *channel_user_put;
+    return stats;
+}
+
 void nv2a_init_mmio() {
     // 0xFD000000 - 16MB mapped memory
     void* mmio = mmap((void*)0xFD000000, 0x01000000, PROT_READ | PROT_WRITE, 

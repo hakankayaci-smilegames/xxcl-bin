@@ -10,6 +10,7 @@ struct ApuDspDebugStats {
     uint32_t program_counter = 0;
     uint32_t program_words[3] = {};
     uint64_t instructions_executed = 0;
+    bool worker_running = false;
 };
 
 // Initialize register defaults for the memory-mapped APU device.

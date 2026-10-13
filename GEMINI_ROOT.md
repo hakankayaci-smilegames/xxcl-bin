@@ -35,6 +35,7 @@
 ## 6. Proje Dokümantasyonu & Mimari Senkronizasyonu (Architecture Sync)
 - Yeni projeye başlandığında veya mimari yapının kavranması gerektiğinde, tüm kod ve yapılandırma dosyalarını okuyarak bağlantıları açıklayan bir `PROJECT_ARCHITECTURE.md` oluşturmayı öner veya oluştur.
 - Projede kod, sahne, resource veya mekanik değişikliği yapıldığında; `PROJECT_ARCHITECTURE.md` dokümanını zorunlu olarak senkronize ve güncel tut.
+- Her teslim edilebilir değişiklikte, GitHub'da/public dağıtımda görünen kapsamı doğru yansıtması için `README.md` dosyasını da senkronize et. Tamamlananları, mevcut sınırları ve doğrulanmış sonraki adımı güncelle; eskimiş engel ve iddiaları bırakma.
 
 ## 7. Git ve Versiyon Kontrol Dokunulmazlığı (Hands Off Git)
 - **Git ile Dosya Değiştirme / Sıfırlama Kesinlikle Yasak:** Kullanıcı açıkça istemediği sürece (`git checkout`, `git restore`, `git reset`, `git revert`, `git clean` vb.) hiçbir dosya geri alma/sıfırlama komutu çalıştırma.

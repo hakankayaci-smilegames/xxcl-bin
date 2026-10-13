@@ -63,6 +63,8 @@ ApuDspCore gp_dsp;
 std::atomic<bool> apu_worker_running{false};
 std::atomic<uint64_t> gp_dsp_instructions_executed{0};
 std::thread apu_worker;
+std::atomic<uint32_t> gp_dsp_debug_pc{0};
+std::array<std::atomic<uint32_t>, 3> gp_dsp_debug_program_words{};
 uint32_t last_reported_dsp_fault_pc = UINT32_MAX;
 uint32_t last_reported_dsp_fault_instruction = UINT32_MAX;
 
@@ -181,6 +183,11 @@ bool apu_initialize() {
     gp_max_sge = 0;
     gp_reset_value = 0;
     gp_dsp = ApuDspCore{};
+    gp_dsp_instructions_executed.store(0, std::memory_order_relaxed);
+    gp_dsp_debug_pc.store(0, std::memory_order_relaxed);
+    for (auto& word : gp_dsp_debug_program_words) {
+        word.store(0, std::memory_order_relaxed);
+    }
 
     // The VP PIO queue is empty at reset, so all command slots are available.
     *reinterpret_cast<volatile uint32_t*>(vp_base + vp_pio_free_offset) =
@@ -254,17 +261,23 @@ size_t apu_run_gp_dsp(uint32_t instruction_budget) {
         ++executed;
     }
     gp_dsp_instructions_executed.fetch_add(executed, std::memory_order_relaxed);
+    const uint32_t pc = gp_dsp.program_counter();
+    gp_dsp_debug_program_words[0].store(gp_dsp.program_word(pc), std::memory_order_relaxed);
+    gp_dsp_debug_program_words[1].store(gp_dsp.program_word(pc + 1), std::memory_order_relaxed);
+    gp_dsp_debug_program_words[2].store(gp_dsp.program_word(pc + 2), std::memory_order_relaxed);
+    gp_dsp_debug_pc.store(pc, std::memory_order_relaxed);
     return executed;
 }
 
 ApuDspDebugStats apu_gp_dsp_debug_stats() {
     ApuDspDebugStats stats;
-    stats.program_counter = gp_dsp.program_counter();
-    stats.program_words[0] = gp_dsp.program_word(stats.program_counter);
-    stats.program_words[1] = gp_dsp.program_word(stats.program_counter + 1);
-    stats.program_words[2] = gp_dsp.program_word(stats.program_counter + 2);
+    stats.program_counter = gp_dsp_debug_pc.load(std::memory_order_relaxed);
+    stats.program_words[0] = gp_dsp_debug_program_words[0].load(std::memory_order_relaxed);
+    stats.program_words[1] = gp_dsp_debug_program_words[1].load(std::memory_order_relaxed);
+    stats.program_words[2] = gp_dsp_debug_program_words[2].load(std::memory_order_relaxed);
     stats.instructions_executed =
         gp_dsp_instructions_executed.load(std::memory_order_relaxed);
+    stats.worker_running = apu_worker_running.load(std::memory_order_relaxed);
     return stats;
 }
 

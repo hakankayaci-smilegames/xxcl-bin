@@ -2,6 +2,12 @@
 
 XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerinde çalıştırmayı hedefleyen modüler, LLE (Low Level Emulation) ve HLE (High Level Emulation) karması bir uyumluluk katmanıdır. Geleneksel emülatörlerin aksine, oyunları tamamen izole edilmiş bir ortamda sanallaştırmak yerine, Xbox Kernel çağrılarını ve MMIO (Memory Mapped I/O) donanım adreslerini Linux üzerinde POSIX/glibc sistem çağrılarına eşleyerek, işlemcinin komutları native olarak (veya olabildiğince yakın) işlemesini amaçlar.
 
+## Güncel Durum
+
+XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. Son Sega GT entegrasyon koşusu DSP firmware'ini `PC=0x171` noktasına kadar ilerletti; burada henüz desteklenmeyen `P=0x000000` komutunda duruyor. Bu checkpoint oyun özelinde bir geçiş değildir; sıradaki DSP davranışını belirlemek için kullanılan entegrasyon kanıtıdır.
+
+SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve NV2A FIFO GET/PUT değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. NV2A worker şimdilik FIFO GET işaretçisini PUT'a eşitler; pushbuffer komutları ayrıştırılmadığı için oyun grafikleri henüz çizilmiyor.
+
 ## 🏗️ Mimari ve Şematik (Architecture)
 
 Aşağıdaki şema, XXCL'nin donanım kaynaklarını ve kernel çağrılarını (HLE) nasıl Linux POSIX fonksiyonlarına bağladığını özetlemektedir:
@@ -79,6 +85,8 @@ flowchart TD
   - `ExAllocatePool` üzerinden alınan bellekleri oyun sınır dışına (out-of-bounds) taşırarak Linux glibc heap yapısını bozuyordu (malloc/free assertion failure). Tüm tahsislere `4096 bayt` padding eklendi ve gerçek boyutları `unordered_map` ile takip edilerek (`MmQueryAllocationSize` vb.) glibc'nin çökmesi %100 engellendi.
 - **NV2A FIFO Asenkron Worker (`nv2a.cpp`)**: 
   - Sega GT 2002 GPU/NV2A donanımına (PFIFO CACHE1 STATUS - `0xFD100410`) yazıp FIFO'nun boşalmasını beklerken (spin-loop) %100 CPU harcayarak kilitleniyordu. Bir arka plan `pthread` yaratıldı, bu thread düzenli olarak GPU register'ını "işi bitmiş/boş" (busy=0) şeklinde güncelleyerek oyun döngüsünün kırılıp devam etmesi sağlandı.
+- **Host tanılama overlay'i (`video/window.cpp`)**:
+  - Host FPS/frametime ile APU DSP ve NV2A FIFO sayaçlarını gösterir. Bu değerler emülatör döngüsünü izler; Xbox oyununun gerçek çizim hızı olarak yorumlanmamalıdır.
 - **Fiziksel Adres Maskelemesi**:
   - `MmGetPhysicalAddress`, sanal adresleri doğrudan değil, `0x03FFFFFF` (64MB) maskesinden geçirerek Xbox fiziksel bellek uzayına (%100 uygun) döndürmeye başladı.
 - **EEPROM Parametrelerinin Mocklanması (`ex.cpp`)**:
@@ -90,14 +98,13 @@ flowchart TD
 
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
-1. **DirectSound / Audio Subsystem Başlatma Hatası**:
-   - Mevcut aşamada oyun `ExQueryNonVolatileSetting`'i doğru almasına rağmen `DSOUND` bölümünde `DirectSoundCreate` çağrısı sırasında/sonrasında pointer null kalıyor ve `0x0015F8DB` adresinde SIGSEGV yiyor.
-   - **Plan**: `DSOUND` içindeki `DirectSoundCreate` mockları için, bellekte sahte de olsa geçerli bir VTable yapısına sahip sahte (dummy) COM nesnesi döndürecek bir Kernel intercept/stub yazılacak.
-2. **D3D ve NV2A Gerçek Çizim Geliştirmeleri**:
-   - Oyunun ana loop'a girip ekrana görüntü basması için NV2A PushBuffer komut ayrıştırıcısı (parser) yazılmalı ve bu komutlar Vulkan/OpenGL komutlarına çevrilmeli.
-3. **Gamepad / Input Entegrasyonu**:
+1. **GP DSP firmware yürütmesi**:
+   - Güncel checkpoint `PC=0x171`, `P=0x000000`. Önce komutun DSP56300 anlamı belirlenip oyun bağımsız sözleşme testiyle uygulanmalı; ses komut tamamlama davranışı gerçek APU/DSP olaylarına bağlanmalı.
+2. **D3D ve NV2A gerçek çizimi**:
+   - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
+3. **Gamepad / Input entegrasyonu**:
    - `XInputGetState` gibi input API çağrıları Host işletim sistemindeki evdev/SDL katmanına bağlanacak.
-4. **Dosya Sistemi (VFS) Zenginleştirmesi**:
+4. **Dosya sistemi (VFS) zenginleştirmesi**:
    - Oyun DVD'den (veya T:\\, Z:\\ gibi sanal Xbox bölümlerinden) veri çekmeye çalıştığında Host dosya sistemi hiyerarşisine doğru yönlendirilmesi için sembolik link (VFS) map algoritması genişletilecek.
 
 ---
