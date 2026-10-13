@@ -164,6 +164,29 @@ int main() {
         compare_core.program_counter() != 1 ||
         (compare_core.register_word(57) & (1u << 2)) == 0) return 25;
 
+    // BEQ consumes its long relative displacement and leaves the condition
+    // register unchanged whether the branch is taken or not.
+    words[0] = 0x00200013; // CLR A -> Z=1
+    words[1] = 0x000D104A; // BEQ
+    words[2] = 0x00000039;
+    xbe::kernel::ApuDspCore beq_taken_core;
+    if (!beq_taken_core.bootstrap(table_physical, 1) ||
+        beq_taken_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        beq_taken_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        beq_taken_core.program_counter() != 0x3A ||
+        (beq_taken_core.register_word(57) & (1u << 2)) == 0) return 26;
+
+    words[0] = 0x000140C0; // ADD #$000001, A -> Z=0
+    words[1] = 0x00000001;
+    words[2] = 0x000D104A; // BEQ
+    words[3] = 0x00000039;
+    xbe::kernel::ApuDspCore beq_not_taken_core;
+    if (!beq_not_taken_core.bootstrap(table_physical, 1) ||
+        beq_not_taken_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        beq_not_taken_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        beq_not_taken_core.program_counter() != 4 ||
+        (beq_not_taken_core.register_word(57) & (1u << 2)) != 0) return 27;
+
     words[0] = 0x000D1080; // BSR xxxx
     words[1] = 0x00000040;
     words[0x40] = 0x0000000C; // RTS

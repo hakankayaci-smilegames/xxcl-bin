@@ -213,6 +213,21 @@ ApuDspCore::StepResult ApuDspCore::step() {
         return StepResult::executed;
     }
 
+    if (instruction == 0x000D104A) { // BEQ xxxx
+        if (program_counter_ + 1 >= program_word_count) {
+            return StepResult::unsupported_instruction;
+        }
+        const uint32_t encoded_displacement = program_[program_counter_ + 1] & dsp_word_mask;
+        const int32_t displacement = (encoded_displacement & 0x00800000) != 0
+            ? static_cast<int32_t>(encoded_displacement) - 0x01000000
+            : static_cast<int32_t>(encoded_displacement);
+        const bool zero = (registers_[57] & (1u << 2)) != 0;
+        advance_program_counter(zero
+            ? static_cast<uint32_t>(static_cast<int32_t>(program_counter_) + displacement) & 0x0FFF
+            : program_counter_ + 2);
+        return StepResult::executed;
+    }
+
     constexpr uint32_t bsr_short_mask = 0x00FFFC20;
     constexpr uint32_t bsr_short_value = 0x00050800;
     if ((instruction & bsr_short_mask) == bsr_short_value) { // BSR xxx
