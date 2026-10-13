@@ -95,6 +95,7 @@ void render_overlay() {
     char host_line[64];
     char dsp_line[64];
     char gpu_line[64];
+    char gpu_pulls_line[64];
     std::snprintf(host_line, sizeof(host_line), "HOST FPS %5.1f MS %5.1f",
                   g_host_fps, g_frame_time_ms);
     std::snprintf(dsp_line, sizeof(dsp_line), "DSP %s PC %04X INS %06llu",
@@ -104,12 +105,14 @@ void render_overlay() {
     std::snprintf(gpu_line, sizeof(gpu_line), "GPU %s GET %06X PUT %06X",
                   gpu.worker_running ? "RUN" : "OFF",
                   gpu.fifo_get, gpu.fifo_put);
+    std::snprintf(gpu_pulls_line, sizeof(gpu_pulls_line), "GPU PULLS %06llu",
+                  static_cast<unsigned long long>(gpu.fifo_pull_count));
 
     SDL_SetRenderDrawColor(g_renderer, 8, 14, 20, 255);
     SDL_RenderClear(g_renderer);
     SDL_SetRenderDrawBlendMode(g_renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(g_renderer, 8, 18, 26, 232);
-    SDL_Rect panel{16, 16, 384, 104};
+    SDL_Rect panel{16, 16, 384, 124};
     SDL_RenderFillRect(g_renderer, &panel);
     SDL_SetRenderDrawColor(g_renderer, 48, 104, 126, 255);
     SDL_RenderDrawRect(g_renderer, &panel);
@@ -119,6 +122,7 @@ void render_overlay() {
     draw_text(28, 46, host_line, text_color);
     draw_text(28, 66, dsp_line, text_color);
     draw_text(28, 86, gpu_line, text_color);
+    draw_text(28, 106, gpu_pulls_line, text_color);
     SDL_RenderPresent(g_renderer);
 }
 
@@ -174,8 +178,10 @@ void video_poll_events() {
                         stats.program_words[0], stats.program_words[1],
                         stats.program_words[2]);
             const auto gpu = xbe::kernel::nv2a_debug_stats();
-            std::printf("[DEBUG] GPU FIFO GET=%06X PUT=%06X\n",
-                        gpu.fifo_get, gpu.fifo_put);
+            std::printf("[DEBUG] GPU FIFO GET=%06X PUT=%06X PULLS=%llu LAST=%06X->%06X\n",
+                        gpu.fifo_get, gpu.fifo_put,
+                        static_cast<unsigned long long>(gpu.fifo_pull_count),
+                        gpu.last_pull_get, gpu.last_pull_put);
             printf("[VIDEO] Pencere kapatildi.\n");
             exit(0);
         }
