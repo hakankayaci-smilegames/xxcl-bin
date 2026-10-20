@@ -12,6 +12,8 @@ NV2A için test edilebilir bir PFIFO kayıt durumu eklendi ve worker’a bağlan
 
 Pushbuffer için komut başlığı/veri uzunluğu ve RAMIN’deki DMA nesnesinin üç kelimelik alanı sınır kontrolüyle okunabiliyor. Kesik veya geçersiz veri için tüketim miktarı sıfırdır. Bu çözücüler henüz NV2A worker’a bağlanmadı; çalışan oyunun kuyruğu bu nedenle hâlâ işlenmiyor.
 
+Worker, seçili DMA instance numarasını RAMIN’deki nesneye çevirip ham `flags/limit/frame` alanlarını terminale raporluyor. Canlı Sega GT izinde instance offset’i `0x11C0`; bu yalnız teşhis verisidir, koda oyun adresi olarak sabitlenmemiştir.
+
 ## 🏗️ Mimari ve Şematik (Architecture)
 
 Aşağıdaki şema, XXCL'nin donanım kaynaklarını ve kernel çağrılarını (HLE) nasıl Linux POSIX fonksiyonlarına bağladığını özetlemektedir:

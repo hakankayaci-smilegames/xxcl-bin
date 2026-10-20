@@ -26,10 +26,24 @@ void* nv2a_worker_loop(void* arg) {
     auto* fifo_dma_get = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_get_address);
     auto* fifo_mode = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_mode_address);
     auto* fifo_push1 = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_push1_address);
+    auto* fifo_dma_instance = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_instance_address);
+    auto* ramin = reinterpret_cast<const uint32_t*>(nv2a_ramin_base_address);
+    uint32_t last_reported_dma_instance = UINT32_MAX;
     auto* pfb_write_buffer_cache = reinterpret_cast<volatile uint32_t*>(nv2a_pfb_write_buffer_cache_address);
 
     while (g_nv2a_running.load()) {
         nv2a_complete_pfb_write_buffer_flush(pfb_write_buffer_cache);
+
+        const uint32_t dma_instance = (*fifo_dma_instance & 0xffff) << 4;
+        const auto dma_object = decode_nv2a_dma_object(
+            std::span<const uint32_t>(ramin, nv2a_ramin_size / sizeof(uint32_t)),
+            dma_instance);
+        if (dma_object.status == Nv2aDmaObjectStatus::ok &&
+            dma_instance != last_reported_dma_instance) {
+            printf("[NV2A] DMA object RAMIN+0x%05X: flags=%08X limit=%08X frame=%08X\n",
+                   dma_instance, dma_object.flags, dma_object.limit, dma_object.frame);
+            last_reported_dma_instance = dma_instance;
+        }
 
         // PTIMER ilerletmesi mevcut saat davranışını korur.
         if (ptimer_time_0) {
