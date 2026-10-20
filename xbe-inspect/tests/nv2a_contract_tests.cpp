@@ -102,6 +102,52 @@ void test_reserved_method_header_is_rejected() {
             "invalid header must not advance the DMA GET position");
 }
 
+void test_active_dma_register_sync_copies_user_submission_to_pfifo() {
+    xbe::kernel::Nv2aPfifoState fifo;
+    volatile uint32_t user_get = 0;
+    volatile uint32_t user_put = 0x123400;
+    volatile uint32_t dma_get = 0;
+    volatile uint32_t dma_put = 0;
+
+    require(fifo.sync_active_dma_registers(1, 0x100, &user_get, &user_put,
+                                           &dma_get, &dma_put),
+            "active DMA channel must be synchronized");
+    require(dma_put == 0x123400,
+            "guest USER PUT must reach PFIFO DMA PUT");
+}
+
+void test_active_dma_register_sync_mirrors_completed_get_to_user() {
+    xbe::kernel::Nv2aPfifoState fifo;
+    volatile uint32_t user_get = 0;
+    volatile uint32_t user_put = 0x400;
+    volatile uint32_t dma_get = 0;
+    volatile uint32_t dma_put = 0;
+
+    require(fifo.sync_active_dma_registers(1, 0x100, &user_get, &user_put,
+                                           &dma_get, &dma_put),
+            "active DMA channel must be synchronized");
+    dma_get = 0x80;
+    require(fifo.sync_active_dma_registers(1, 0x100, &user_get, &user_put,
+                                           &dma_get, &dma_put),
+            "active DMA channel must remain synchronized");
+    require(user_get == 0x80,
+            "PFIFO GET progress must be visible through USER DMA GET");
+}
+
+void test_pio_or_disabled_channel_is_not_dma_synchronized() {
+    xbe::kernel::Nv2aPfifoState fifo;
+    volatile uint32_t user_get = 0;
+    volatile uint32_t user_put = 0x400;
+    volatile uint32_t dma_get = 0;
+    volatile uint32_t dma_put = 0;
+
+    require(!fifo.sync_active_dma_registers(0, 0x100, &user_get, &user_put,
+                                            &dma_get, &dma_put),
+            "PIO channel must not be treated as a DMA channel");
+    require(dma_put == 0,
+            "inactive channel must not copy USER PUT into PFIFO");
+}
+
 } // namespace
 
 int main() {
@@ -113,5 +159,8 @@ int main() {
     test_incrementing_method_packet_is_decoded_without_consuming_more_words();
     test_truncated_method_packet_is_not_reported_as_consumed();
     test_reserved_method_header_is_rejected();
+    test_active_dma_register_sync_copies_user_submission_to_pfifo();
+    test_active_dma_register_sync_mirrors_completed_get_to_user();
+    test_pio_or_disabled_channel_is_not_dma_synchronized();
     return 0;
 }

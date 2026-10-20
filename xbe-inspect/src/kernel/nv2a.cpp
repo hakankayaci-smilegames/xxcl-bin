@@ -1,4 +1,5 @@
 #include "nv2a.hpp"
+#include "nv2a_pfifo.hpp"
 #include <sys/mman.h>
 #include <cerrno>
 #include <cstdio>
@@ -20,8 +21,11 @@ void* nv2a_worker_loop(void* arg) {
     (void)arg;
     volatile uint32_t* ptimer_time_0 = (volatile uint32_t*)0xFD009400; // PTIMER TIME_0
     Nv2aFifoObserver fifo_observer;
+    Nv2aPfifoState pfifo_state;
     auto* fifo_dma_put = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_put_address);
     auto* fifo_dma_get = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_get_address);
+    auto* fifo_mode = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_mode_address);
+    auto* fifo_push1 = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_push1_address);
     auto* pfb_write_buffer_cache = reinterpret_cast<volatile uint32_t*>(nv2a_pfb_write_buffer_cache_address);
 
     while (g_nv2a_running.load()) {
@@ -32,7 +36,16 @@ void* nv2a_worker_loop(void* arg) {
             *ptimer_time_0 += 1000;
         }
 
-        // Sadece gerçek PFIFO DMA işaretçilerini gözle; komutları henüz yürütme.
+        const uint32_t active_channel = *fifo_push1 & 0xf;
+        auto* user_dma_base = reinterpret_cast<volatile uint32_t*>(
+            nv2a_user_base_address + active_channel * 0x10000);
+        pfifo_state.sync_active_dma_registers(
+            *fifo_mode, *fifo_push1,
+            user_dma_base + nv2a_user_dma_get_offset / sizeof(uint32_t),
+            user_dma_base + nv2a_user_dma_put_offset / sizeof(uint32_t),
+            fifo_dma_get, fifo_dma_put);
+
+        // USER DMA işaretçilerini seçili kanalın PFIFO durumuyla eşleştir.
         if (fifo_observer.observe(*fifo_dma_get, *fifo_dma_put)) {
             g_nv2a_last_pending_get.store(fifo_observer.get(), std::memory_order_relaxed);
             g_nv2a_last_pending_put.store(fifo_observer.put(), std::memory_order_relaxed);

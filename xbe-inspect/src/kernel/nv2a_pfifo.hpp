@@ -67,6 +67,38 @@ public:
     uint32_t dma_get() const { return dma_get_; }
     uint32_t dma_put() const { return dma_put_; }
 
+    bool sync_active_dma_registers(uint32_t channel_modes, uint32_t push1,
+                                   volatile uint32_t* user_get,
+                                   volatile uint32_t* user_put,
+                                   volatile uint32_t* dma_get,
+                                   volatile uint32_t* dma_put) {
+        const auto channel = static_cast<uint8_t>(push1 & 0xf);
+        if (!user_get || !user_put || !dma_get || !dma_put || channel >= 32 ||
+            (channel_modes & (uint32_t{1} << channel)) == 0 ||
+            (push1 & (uint32_t{1} << 8)) == 0) {
+            return false;
+        }
+
+        const uint32_t guest_put = *user_put;
+        if (guest_put != last_user_put_) {
+            *dma_put = guest_put;
+            last_user_put_ = guest_put;
+        } else if (*dma_put != last_user_put_) {
+            *user_put = *dma_put;
+            last_user_put_ = *dma_put;
+        }
+
+        const uint32_t guest_get = *user_get;
+        if (guest_get != last_user_get_) {
+            *dma_get = guest_get;
+            last_user_get_ = guest_get;
+        } else if (*dma_get != last_user_get_) {
+            *user_get = *dma_get;
+            last_user_get_ = *dma_get;
+        }
+        return true;
+    }
+
     bool read_user_register(uint8_t channel, Nv2aUserRegister reg, uint32_t& value) const {
         if (!active_dma_channel(channel)) return false;
         switch (reg) {
@@ -98,6 +130,8 @@ private:
     uint32_t dma_get_ = 0;
     uint32_t dma_put_ = 0;
     uint32_t reference_ = 0;
+    uint32_t last_user_get_ = 0;
+    uint32_t last_user_put_ = 0;
 };
 
 } // namespace xbe::kernel

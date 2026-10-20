@@ -6,6 +6,11 @@ namespace xbe::kernel {
 
 inline constexpr uintptr_t nv2a_fifo_dma_put_address = 0xFD003240;
 inline constexpr uintptr_t nv2a_fifo_dma_get_address = 0xFD003244;
+inline constexpr uintptr_t nv2a_fifo_mode_address = 0xFD002504;
+inline constexpr uintptr_t nv2a_fifo_push1_address = 0xFD003204;
+inline constexpr uintptr_t nv2a_user_base_address = 0xFD800000;
+inline constexpr uint32_t nv2a_user_dma_put_offset = 0x40;
+inline constexpr uint32_t nv2a_user_dma_get_offset = 0x44;
 inline constexpr uintptr_t nv2a_fifo_status_address = 0xFD003214;
 inline constexpr uintptr_t nv2a_pfb_write_buffer_cache_address = 0xFD100410;
 
