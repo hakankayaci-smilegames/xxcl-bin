@@ -1,5 +1,6 @@
 #include "nv2a.hpp"
 #include "nv2a_pfifo.hpp"
+#include "physical_memory.hpp"
 #include <sys/mman.h>
 #include <cerrno>
 #include <cstdio>
@@ -29,6 +30,7 @@ void* nv2a_worker_loop(void* arg) {
     auto* fifo_dma_instance = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_instance_address);
     auto* ramin = reinterpret_cast<const uint32_t*>(nv2a_ramin_base_address);
     uint32_t last_reported_dma_instance = UINT32_MAX;
+    uint32_t last_reported_dma_get = UINT32_MAX;
     auto* pfb_write_buffer_cache = reinterpret_cast<volatile uint32_t*>(nv2a_pfb_write_buffer_cache_address);
 
     while (g_nv2a_running.load()) {
@@ -58,6 +60,62 @@ void* nv2a_worker_loop(void* arg) {
             user_dma_base + nv2a_user_dma_get_offset / sizeof(uint32_t),
             user_dma_base + nv2a_user_dma_put_offset / sizeof(uint32_t),
             fifo_dma_get, fifo_dma_put);
+
+        if (dma_object.status == Nv2aDmaObjectStatus::ok &&
+            *fifo_dma_get != *fifo_dma_put && (*fifo_dma_get & 3u) == 0) {
+            constexpr uint64_t guest_physical_memory_size = 0x04000000;
+            const uint32_t object_base = nv2a_dma_object_base_address(dma_object);
+            const uint64_t command_address =
+                static_cast<uint64_t>(object_base) + *fifo_dma_get;
+            const volatile uint32_t* command_word = nullptr;
+
+            if (command_address <= dma_object.limit &&
+                sizeof(uint32_t) - 1 <= dma_object.limit - command_address &&
+                command_address <= UINT32_MAX) {
+                command_word = static_cast<const volatile uint32_t*>(
+                    physical_memory_to_host_dma_alias(
+                        static_cast<uint32_t>(command_address), sizeof(uint32_t)));
+                if (!command_word && command_address < guest_physical_memory_size) {
+                    command_word = reinterpret_cast<const volatile uint32_t*>(
+                        0x80000000u + static_cast<uint32_t>(command_address));
+                } else if (!command_word) {
+                    command_word = static_cast<const volatile uint32_t*>(
+                        physical_memory_to_host(static_cast<uint32_t>(command_address),
+                                                sizeof(uint32_t)));
+                }
+            }
+
+            if (!command_word) {
+                if (*fifo_dma_get != last_reported_dma_get) {
+                    printf("[NV2A] DMA GET 0x%08X okunamiyor; isaretci ilerletilmedi.\n",
+                           *fifo_dma_get);
+                    last_reported_dma_get = *fifo_dma_get;
+                }
+            } else {
+                const uint32_t word = *command_word;
+                if ((word & 3u) != 0) {
+                    const auto control = process_nv2a_dma_control_word(
+                        *fifo_dma_get, word, object_base, dma_object.limit);
+                    if (control.status == Nv2aDmaControlStatus::jump) {
+                        const uint32_t previous_get = *fifo_dma_get;
+                        *fifo_dma_get = control.next_get;
+                        pfifo_state.sync_active_dma_registers(
+                            *fifo_mode, *fifo_push1,
+                            user_dma_base + nv2a_user_dma_get_offset / sizeof(uint32_t),
+                            user_dma_base + nv2a_user_dma_put_offset / sizeof(uint32_t),
+                            fifo_dma_get, fifo_dma_put);
+                        printf("[NV2A] DMA JUMP 0x%08X -> 0x%08X; GET ilerletildi.\n",
+                               previous_get, control.next_get);
+                        last_reported_dma_get = UINT32_MAX;
+                    } else if (control.status != Nv2aDmaControlStatus::invalid &&
+                               *fifo_dma_get != last_reported_dma_get) {
+                        printf("[NV2A] DMA kontrol kelimesi 0x%08X desteklenmiyor veya nesne sinirini asiyor; GET sabit.\n",
+                               word);
+                        last_reported_dma_get = *fifo_dma_get;
+                    }
+                }
+            }
+        }
 
         // USER DMA işaretçilerini seçili kanalın PFIFO durumuyla eşleştir.
         if (fifo_observer.observe(*fifo_dma_get, *fifo_dma_put)) {

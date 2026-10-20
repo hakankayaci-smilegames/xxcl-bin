@@ -12,6 +12,9 @@ int main() {
     if (base == 0 || (base & 0x3fff) != 0 || base < 0x20000 || base + 0x5000 - 1 > 0x3fffffff) return 2;
     if (xbe::kernel::physical_memory_from_host(static_cast<char*>(allocation) + 0x234) != base + 0x234) return 3;
     if (xbe::kernel::physical_memory_to_host(base + 0x234, 0x100) != static_cast<char*>(allocation) + 0x234) return 4;
+    const auto dma_alias = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(allocation) & 0x0fffffffu);
+    if (xbe::kernel::physical_memory_to_host_dma_alias(dma_alias, 0x100) != allocation) return 13;
+    if (xbe::kernel::physical_memory_to_host_dma_alias(dma_alias + 0x4ff0, 0x20) != nullptr) return 14;
     if (xbe::kernel::physical_memory_to_host(base + 0x4ff0, 0x20) != nullptr) return 5;
 
     auto next = xbe::kernel::physical_memory_register(allocation, 0x5000, 0x1000, 0x20000, 0x3fffffff);

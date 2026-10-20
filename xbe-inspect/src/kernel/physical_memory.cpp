@@ -114,6 +114,22 @@ void* physical_memory_to_host(uint32_t physical_address, size_t size) {
     return reinterpret_cast<void*>(region.host_start + offset);
 }
 
+void* physical_memory_to_host_dma_alias(uint32_t dma_address, size_t size) {
+    constexpr uint32_t dma_address_mask = 0x0fffffffu;
+    if (size == 0 || dma_address > dma_address_mask || size > 0x10000000u) return nullptr;
+
+    std::lock_guard<std::mutex> lock(regions_mutex);
+    void* match = nullptr;
+    for (const auto& [host_start, region] : regions_by_host) {
+        const auto alias_start = static_cast<uint32_t>(host_start & dma_address_mask);
+        const uint32_t offset = (dma_address - alias_start) & dma_address_mask;
+        if (offset >= region.size || size > region.size - offset) continue;
+        if (match) return nullptr;
+        match = reinterpret_cast<void*>(host_start + offset);
+    }
+    return match;
+}
+
 bool physical_memory_unregister(void* host_address) {
     if (!host_address) return false;
     std::lock_guard<std::mutex> lock(regions_mutex);

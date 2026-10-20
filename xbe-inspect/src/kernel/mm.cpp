@@ -1,5 +1,6 @@
 #include "mm.hpp"
 #include "../kernel.hpp"
+#include "guest_dma_memory.hpp"
 #include "physical_memory.hpp"
 #include <cstdlib>
 #include <sys/mman.h>
@@ -8,9 +9,12 @@
 #include <cstdio>
 
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 static std::unordered_map<void*, size_t> contiguous_allocs;
+static std::unordered_set<void*> guest_dma_allocs;
 static std::mutex contiguous_allocs_mutex;
+static uint32_t next_guest_dma_address = xbe::kernel::guest_dma_memory_start;
 
 static void track_alloc(void* ptr, size_t size) {
     if (!ptr) return;
@@ -28,6 +32,36 @@ static size_t get_tracked_alloc(void* ptr) {
 static void untrack_alloc(void* ptr) {
     std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
     contiguous_allocs.erase(ptr);
+}
+
+static bool untrack_guest_dma_alloc(void* ptr) {
+    std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
+    return guest_dma_allocs.erase(ptr) != 0;
+}
+
+static void* allocate_guest_dma_memory(size_t size, size_t alignment) {
+    if (size > UINT32_MAX || alignment > UINT32_MAX) return nullptr;
+    const uint32_t safe_alignment = static_cast<uint32_t>(alignment);
+    std::lock_guard<std::mutex> lock(contiguous_allocs_mutex);
+    uint32_t candidate = next_guest_dma_address;
+    uint32_t aligned_candidate = 0;
+    while (xbe::kernel::find_guest_dma_memory_address(
+        static_cast<uint32_t>(size), safe_alignment, aligned_candidate, candidate)) {
+        candidate = aligned_candidate;
+        void* memory = mmap(reinterpret_cast<void*>(static_cast<uintptr_t>(candidate)), size,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+        if (memory != MAP_FAILED) {
+            next_guest_dma_address = candidate + static_cast<uint32_t>(size);
+            contiguous_allocs[memory] = size;
+            guest_dma_allocs.insert(memory);
+            return memory;
+        }
+        if (errno != EEXIST) return nullptr;
+        if (candidate > UINT32_MAX - safe_alignment) return nullptr;
+        candidate += safe_alignment;
+    }
+    return nullptr;
 }
 
 
@@ -61,8 +95,11 @@ extern "C" void __attribute__((__stdcall__)) xbox_MmFreeContiguousMemory(void* B
     printf("[KERNEL] MmFreeContiguousMemory(BaseAddress: %p) cagrildi.\n", BaseAddress);
     if (BaseAddress && BaseAddress != emergency_buffer) {
         xbe::kernel::physical_memory_unregister(BaseAddress);
+        const size_t alloc_size = get_tracked_alloc(BaseAddress);
+        const bool mapped_guest_dma = untrack_guest_dma_alloc(BaseAddress);
         untrack_alloc(BaseAddress);
-        free(BaseAddress);
+        if (mapped_guest_dma) munmap(BaseAddress, alloc_size);
+        else free(BaseAddress);
     }
 }
 
@@ -117,20 +154,20 @@ extern "C" void* __attribute__((__stdcall__)) xbox_MmAllocateContiguousMemoryEx(
         align = 4096;
     }
 
-    void* ptr = nullptr;
-    
     size_t alloc_size = (NumberOfBytes + 4095) & ~4095;
-    int res = posix_memalign(&ptr, align, alloc_size);
+    void* ptr = allocate_guest_dma_memory(alloc_size, align);
 
-    if (res != 0 || !ptr) {
-        printf("[KERNEL] MmAllocateContiguousMemoryEx -> posix_memalign basarisiz oldu! (Hata: %d)\n", res);
+    if (!ptr) {
+        printf("[KERNEL] MmAllocateContiguousMemoryEx -> Xbox DMA adres araliginda tahsis basarisiz oldu.\n");
         return nullptr;
     }
 
     memset(ptr, 0, alloc_size);
     if (!physical_memory_register(ptr, alloc_size, align,
                                   LowestAcceptableAddress, HighestAcceptableAddress)) {
-        free(ptr);
+        untrack_guest_dma_alloc(ptr);
+        untrack_alloc(ptr);
+        munmap(ptr, alloc_size);
         return nullptr;
     }
 

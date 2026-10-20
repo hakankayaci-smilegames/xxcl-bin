@@ -3,7 +3,7 @@
 ## Current checkpoint
 
 - GDB incelemesi, ikinci açılışın guest tarafında `0x001A1C40` noktasında `0xFD100410` kaydındaki `0x10000` bitinin temizlenmesini beklediğini gösterdi. Bu adres NV2A `NV_PFB_WBC` yazı belleği aktarım kaydıdır; bu katmanda yazı belleği önbelleği modellenmediğinden kod artık aktarımın hemen tamamlandığını bildiriyor. Yeni NV2A sözleşme kontrolü bu davranışı kapsıyor. Kaynak ve `./xxcl` hedefi derlendi; yeni izole çalışmada guest bu noktayı geçmiş durumda.
-- Yeni izole ikinci açılışta GDB guest'i `0x001A3238` civarında, `NV_USER_DMA_GET` ile `NV_USER_DMA_PUT` değerlerinin eşit olmasını bekleyen döngüde yakaladı. USER alanında PUT (`0xFD800040`) `0x04AD8000`, GET (`0xFD800044`) `0`; PFIFO Cache1 DMA PUT/GET (`0xFD003240/244`) ikisi de `0`. NV2A referansında USER GET/PUT okumaları ortak PFIFO DMA kayıtlarına bağlıdır. Mevcut düz bellek eşlemesi bu ilişkiyi kurmuyor. Komut tüketimi veya gerçek çizim henüz yok; GET'i zorla PUT'a eşitlemek komutları atlayacağı için yapılmadı.
+- 20 Ekim 2026'daki temiz HDD koşularında ikinci açılış, aktif DMA nesnesini RAMIN `+0x11C0` konumunda buldu (`flags=0xB002`, `limit=0x07FFAFFF`, `frame=3`). Host'un rastgele adresleri bazen bu nesnenin sınırını aşıyordu. `MmAllocateContiguousMemoryEx` artık bitişik alanları nesnenin kabul ettiği DMA adres aralığında tahsis ediyor. İki ayrı temiz çalıştırmada JUMP hedefi `0x0470D000` oldu; PFIFO GET/PUT bu adreste eşitlendi ve oyun her iki testte de süre sınırına kadar çalışmaya devam etti. Bu, tek bir kontrol komutunun kararlı işlendiğini doğrular; yöntem paketleri ve çizim henüz yürütülmüyor.
 
 - The source builds in `/tmp/xxcl-debug-build`; all 8 CTest targets pass, including a new NV2A contract target for PFIFO register addresses and non-mutating pending-queue observation.
 - The VFS now resolves Xbox drive paths and symbolic links beneath a configurable host root. File handles are tracked and validated; create dispositions, explicit/current offsets, close, supported file/volume queries, and CD-ROM write protection have contract checks.
@@ -18,6 +18,6 @@
 
 ## Next move
 
-Next, model the generic NV_USER DMA GET/PUT aliases and trace how the game's DMA instance points to its command buffer. Then implement real command consumption; do not force GET=PUT just to pass the wait. The DSP worker remains at its recurring DMA EOL poll around `PC=0x121`. The shortest drawing milestone remains a guest pushbuffer clear reaching a host graphics backend; pushbuffer command execution is not implemented.
+Next, trace the guest's operation after the DMA GET/PUT match. Read the next pushbuffer command safely and add general method handling; do not advance GET for unreadable or unsupported data. The DSP worker remains at its recurring DMA EOL poll around `PC=0x121`. The first visible drawing milestone remains a real guest clear reaching the host window; no game image has been rendered yet.
 
 Keep Xbox export signatures and calling conventions stable. Keep game-specific behavior out of generic VFS, file, and device dispatch; implement device behavior in device backends.

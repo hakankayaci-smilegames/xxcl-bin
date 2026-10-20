@@ -1,5 +1,6 @@
 #include "../src/kernel/nv2a.hpp"
 #include "../src/kernel/nv2a_pfifo.hpp"
+#include "../src/kernel/guest_dma_memory.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -159,6 +160,8 @@ void test_dma_object_words_are_read_from_the_requested_ramin_offset() {
     require(object.flags == 0x0000B002 && object.limit == 0x07FFAFFf &&
                 object.frame == 3,
             "DMA object must preserve its three source words");
+    require(xbe::kernel::nv2a_dma_object_base_address(object) == 0,
+            "DMA object base must combine the address fields from flags and frame");
 }
 
 void test_dma_object_decoder_rejects_misaligned_and_truncated_inputs() {
@@ -172,9 +175,67 @@ void test_dma_object_decoder_rejects_misaligned_and_truncated_inputs() {
             "DMA object extending beyond RAMIN must be rejected");
 }
 
+void test_dma_jump_advances_get_to_the_decoded_target() {
+    const auto result = xbe::kernel::process_nv2a_dma_control_word(
+        0, 0x04ad8001, 0, 0x07ffafff);
+
+    require(result.status == xbe::kernel::Nv2aDmaControlStatus::jump,
+            "aligned DMA jump within the object limit must be processed");
+    require(result.next_get == 0x04ad8000,
+            "processing a DMA jump must move GET to its target address");
+}
+
+void test_dma_jump_outside_the_object_limit_does_not_advance_get() {
+    const auto result = xbe::kernel::process_nv2a_dma_control_word(
+        0, 0x08000001, 0, 0x07ffafff);
+
+    require(result.status == xbe::kernel::Nv2aDmaControlStatus::out_of_range,
+            "DMA jump beyond the object limit must be rejected");
+    require(result.next_get == 0,
+            "rejected DMA jump must leave GET unchanged");
+}
+
+void test_dma_jump_limit_includes_the_dma_object_base() {
+    const auto result = xbe::kernel::process_nv2a_dma_control_word(
+        0x100, 0x00002001, 0x00001000, 0x00002fff);
+
+    require(result.status == xbe::kernel::Nv2aDmaControlStatus::out_of_range,
+            "DMA object base plus jump target must stay below the object limit");
+    require(result.next_get == 0x100,
+            "base-adjusted out-of-range jump must not advance GET");
+}
+
+void test_dma_jump_at_the_inclusive_limit_is_accepted() {
+    const auto result = xbe::kernel::process_nv2a_dma_control_word(
+        0, 0x00001001, 0, 0x00001000);
+
+    require(result.status == xbe::kernel::Nv2aDmaControlStatus::jump,
+            "DMA jump exactly at the inclusive object limit must be accepted");
+    require(result.next_get == 0x1000,
+            "inclusive-limit jump must move GET to its target");
+}
+
+void test_unsupported_dma_call_does_not_advance_get() {
+    const auto result = xbe::kernel::process_nv2a_dma_control_word(
+        0x100, 0x02000002, 0, 0x07ffafff);
+
+    require(result.status == xbe::kernel::Nv2aDmaControlStatus::unsupported,
+            "valid but unsupported DMA call must be reported as unsupported");
+    require(result.next_get == 0x100,
+            "unsupported DMA control word must leave GET unchanged");
+}
+
 } // namespace
 
 int main() {
+    uint32_t guest_address = 0;
+    if (!xbe::kernel::find_guest_dma_memory_address(0x200000, 0x4000, guest_address) ||
+        guest_address != 0x04000000) return 40;
+    if (!xbe::kernel::find_guest_dma_memory_address(0x200000, 0x4000, guest_address,
+                                       0x04001000) ||
+        guest_address != 0x04004000) return 41;
+    if (xbe::kernel::find_guest_dma_memory_address(0x04000000, 0x1000, guest_address)) return 42;
+
     test_fifo_register_addresses();
     test_pfb_write_buffer_flush_completes_immediately();
     test_pending_observation_is_counted_once_without_advancing_get();
@@ -188,5 +249,10 @@ int main() {
     test_pio_or_disabled_channel_is_not_dma_synchronized();
     test_dma_object_words_are_read_from_the_requested_ramin_offset();
     test_dma_object_decoder_rejects_misaligned_and_truncated_inputs();
+    test_dma_jump_advances_get_to_the_decoded_target();
+    test_dma_jump_outside_the_object_limit_does_not_advance_get();
+    test_dma_jump_limit_includes_the_dma_object_base();
+    test_dma_jump_at_the_inclusive_limit_is_accepted();
+    test_unsupported_dma_call_does_not_advance_get();
     return 0;
 }

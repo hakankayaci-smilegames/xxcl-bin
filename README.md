@@ -4,15 +4,25 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu ve APU/DSP firmware başlatma üzerinde çalışılıyor. Temiz geçici HDD kökündeki ilk açılış reboot istedi. NV2A yazı belleği beklemesi için eklenen model ikinci açılışta ilerleme sağladı. Oyun şimdi `0x001A3238` civarında USER DMA GET ile PUT eşit olana kadar bekliyor. PUT adresi bellek tahsisine göre değişiyor; son izde USER GET `0` kaldı. Komut kuyruğu henüz çalıştırılmıyor. Gerçek çizim başlamadı.
+XBE yükleme, kernel uyumluluğu ve APU/DSP firmware başlatma üzerinde çalışılıyor. Temiz geçici HDD kökündeki ilk açılış reboot ister; aynı kökle yapılan ikinci açılış NV2A kuyruğunu başlatır. Xbox bitişik bellek tahsisleri artık GPU'nun kabul ettiği adres aralığından veriliyor. Temiz açılışta worker, DMA JUMP komutunu okuyup `0x0470D000` adresine geçti ve PFIFO GET/PUT bu değerde eşitlendi. Bu, kuyruğun bir kontrol komutunu ilerletebildiğini gösterir; yöntem komutları, temizleme veya oyun görüntüsü henüz işlenmiyor.
 
-SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Worker, NV2A'nın `0xFD100410` yazı belleği aktarım kaydını “bekleyen aktarım yok” durumunda tutar; burada gerçek bir yazı belleği önbelleği modellenmiyor. Etkin DMA kanalında worker USER DMA PUT/GET ile PFIFO Cache1 DMA PUT/GET (`0xFD800040/44`, `0xFD003240/244`) değerlerini eşliyor; canlı izde PUT iki görünümde de aynı, GET ise henüz `0`. Komutlar henüz işlenmiyor. `GPU PENDING` sayacı komutların işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
+SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Worker, NV2A'nın `0xFD100410` yazı belleği aktarım kaydını “bekleyen aktarım yok” durumunda tutar; burada gerçek bir yazı belleği önbelleği modellenmiyor. Etkin DMA kanalında worker USER DMA GET/PUT ile PFIFO Cache1 DMA GET/PUT (`0xFD800044/40`, `0xFD003244/240`) değerlerini eşliyor. Desteklenen atlama işlendiğinde GET, çözülen hedefe gider; bozuk, sınır dışı veya desteklenmeyen kontrol komutlarında GET ilerlemez. `GPU PENDING` sayacı komutların işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
 
-NV2A için test edilebilir bir PFIFO kayıt durumu eklendi ve worker’a bağlandı. Etkin DMA kanalında USER DMA PUT PFIFO’ya aktarılıyor; PFIFO GET ilerlemesi USER GET görünümüne yansıtılıyor. Bu eşleme oyun beklemesini tek başına çözmüyor: GET’i ilerletecek pushbuffer komutları henüz yürütülmüyor.
+NV2A için test edilebilir PFIFO kayıt durumu worker’a bağlandı. Etkin DMA kanalında USER ve PFIFO GET/PUT değerleri eşleniyor. Worker, okunabilir ve nesne sınırları içindeki DMA atlamalarını da uyguluyor; yöntem komutları henüz yürütülmüyor.
 
-Pushbuffer için komut başlığı/veri uzunluğu ve RAMIN’deki DMA nesnesinin üç kelimelik alanı sınır kontrolüyle okunabiliyor. Kesik veya geçersiz veri için tüketim miktarı sıfırdır. Bu çözücüler henüz NV2A worker’a bağlanmadı; çalışan oyunun kuyruğu bu nedenle hâlâ işlenmiyor.
+Pushbuffer yöntem paketi ve RAMIN’deki DMA nesnesi sınır kontrolüyle okunabiliyor. Worker şu an geçerli DMA atlamasını uyguluyor; yöntem paketleri henüz yürütülmüyor. DMA nesnesinin hedef belleği çözülemezse GET ilerletilmeden bekleniyor.
 
 Worker, seçili DMA instance numarasını RAMIN’deki nesneye çevirip ham `flags/limit/frame` alanlarını terminale raporluyor. Canlı Sega GT izinde instance offset’i `0x11C0`; bu yalnız teşhis verisidir, koda oyun adresi olarak sabitlenmemiştir.
+
+## Çalıştırma
+
+İlk açılışın istediği yeniden başlatmayı karşılamak için iki çalıştırmada da aynı geçici HDD kökünü kullan:
+
+```bash
+XXCL_TEST_HDD=$(mktemp -d /tmp/xxcl-run.XXXXXX)
+./xxcl "/path/to/default.xbe" --run --hdd-root "$XXCL_TEST_HDD"
+./xxcl "/path/to/default.xbe" --run --hdd-root "$XXCL_TEST_HDD"
+```
 
 ## 🏗️ Mimari ve Şematik (Architecture)
 

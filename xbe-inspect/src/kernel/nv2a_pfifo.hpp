@@ -66,6 +66,10 @@ struct Nv2aDmaObjectWords {
     uint32_t frame = 0;
 };
 
+inline uint32_t nv2a_dma_object_base_address(const Nv2aDmaObjectWords& object) {
+    return (object.frame & 0xfffff000u) | (object.flags & 0xfff00000u);
+}
+
 inline Nv2aDmaObjectWords decode_nv2a_dma_object(std::span<const uint32_t> ramin,
                                                   uint32_t byte_offset) {
     if ((byte_offset & 3) != 0) return {};
@@ -78,6 +82,42 @@ inline Nv2aDmaObjectWords decode_nv2a_dma_object(std::span<const uint32_t> ramin
 
     return {Nv2aDmaObjectStatus::ok, ramin[word_offset], ramin[word_offset + 1],
             ramin[word_offset + 2]};
+}
+
+enum class Nv2aDmaControlStatus : uint8_t {
+    jump,
+    unsupported,
+    invalid,
+    out_of_range
+};
+
+struct Nv2aDmaControlResult {
+    Nv2aDmaControlStatus status = Nv2aDmaControlStatus::invalid;
+    uint32_t next_get = 0;
+};
+
+inline Nv2aDmaControlResult process_nv2a_dma_control_word(
+    uint32_t current_get, uint32_t word, uint32_t object_base, uint32_t object_limit) {
+    Nv2aDmaControlResult result{Nv2aDmaControlStatus::invalid, current_get};
+    if ((current_get & 3u) != 0) return result;
+
+    const uint32_t command = word & 3u;
+    if (command == 2u || word == 0x00020000u) {
+        result.status = Nv2aDmaControlStatus::unsupported;
+        return result;
+    }
+    if (command != 1u) return result;
+
+    const uint32_t target = word & ~3u;
+    const uint64_t effective_target = static_cast<uint64_t>(object_base) + target;
+    if (effective_target > object_limit) {
+        result.status = Nv2aDmaControlStatus::out_of_range;
+        return result;
+    }
+
+    result.status = Nv2aDmaControlStatus::jump;
+    result.next_get = target;
+    return result;
 }
 
 class Nv2aPfifoState {
