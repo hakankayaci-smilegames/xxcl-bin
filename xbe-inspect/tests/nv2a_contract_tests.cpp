@@ -1,4 +1,5 @@
 #include "../src/kernel/nv2a.hpp"
+#include "../src/kernel/nv2a_pfifo.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -36,11 +37,43 @@ void test_pending_observation_is_counted_once_without_advancing_get() {
             "observation must preserve hardware GET and PUT values");
 }
 
+void test_active_dma_user_registers_share_pfifo_state() {
+    xbe::kernel::Nv2aPfifoState fifo;
+    fifo.set_channel_dma_enabled(3, true);
+    fifo.set_active_channel(3);
+    fifo.write_dma_put(0x04AD8000);
+
+    uint32_t value = 0;
+    require(fifo.read_user_register(3, xbe::kernel::Nv2aUserRegister::dma_put, value),
+            "active DMA channel USER PUT must be readable");
+    require(value == 0x04AD8000,
+            "USER PUT must read the value held by PFIFO DMA PUT");
+
+    require(fifo.write_user_register(3, xbe::kernel::Nv2aUserRegister::dma_get, 0x40),
+            "active DMA channel USER GET must be writable");
+    require(fifo.dma_get() == 0x40,
+            "USER GET writes must update PFIFO DMA GET");
+}
+
+void test_inactive_user_channel_does_not_change_active_fifo() {
+    xbe::kernel::Nv2aPfifoState fifo;
+    fifo.set_channel_dma_enabled(2, true);
+    fifo.set_active_channel(2);
+    fifo.write_dma_put(0x80);
+
+    require(!fifo.write_user_register(1, xbe::kernel::Nv2aUserRegister::dma_put, 0x100),
+            "USER writes for a non-active channel must be rejected");
+    require(fifo.dma_put() == 0x80,
+            "a rejected USER write must leave PFIFO DMA PUT unchanged");
+}
+
 } // namespace
 
 int main() {
     test_fifo_register_addresses();
     test_pfb_write_buffer_flush_completes_immediately();
     test_pending_observation_is_counted_once_without_advancing_get();
+    test_active_dma_user_registers_share_pfifo_state();
+    test_inactive_user_channel_does_not_change_active_fifo();
     return 0;
 }

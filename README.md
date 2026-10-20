@@ -8,6 +8,8 @@ XBE yükleme, kernel uyumluluğu ve APU/DSP firmware başlatma üzerinde çalı�
 
 SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Worker, NV2A'nın `0xFD100410` yazı belleği aktarım kaydını “bekleyen aktarım yok” durumunda tutar; burada gerçek bir yazı belleği önbelleği modellenmiyor. PFIFO Cache1 DMA kayıtları (`0xFD003240/244`) ve USER alanındaki karşılıkları (`0xFD800040/44`) henüz birbirine bağlı değil; oyun USER PUT'u `0x04AD8000` yapmışken GET `0` kalıyor. `GPU PENDING` sayacı komutların işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
 
+NV2A için test edilebilir bir PFIFO kayıt durumu eklendi. Bu, seçili ve DMA kipindeki kanalda USER DMA GET/PUT/REF kayıtlarının ortak PFIFO değerlerini kullanması gerektiğini tarif ediyor; şu an henüz gerçek MMIO erişim yoluna bağlı değil. Bu nedenle runtime’daki USER/PFIFO ayrılığı ve oyunun beklemesi bu değişiklikle çözülmüş sayılmaz.
+
 ## 🏗️ Mimari ve Şematik (Architecture)
 
 Aşağıdaki şema, XXCL'nin donanım kaynaklarını ve kernel çağrılarını (HLE) nasıl Linux POSIX fonksiyonlarına bağladığını özetlemektedir:
