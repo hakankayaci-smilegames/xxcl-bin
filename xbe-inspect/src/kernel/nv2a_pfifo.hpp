@@ -53,6 +53,33 @@ inline Nv2aMethodPacket decode_nv2a_method_packet(std::span<const uint32_t> word
     return result;
 }
 
+enum class Nv2aDmaObjectStatus : uint8_t {
+    ok,
+    invalid_offset,
+    truncated
+};
+
+struct Nv2aDmaObjectWords {
+    Nv2aDmaObjectStatus status = Nv2aDmaObjectStatus::invalid_offset;
+    uint32_t flags = 0;
+    uint32_t limit = 0;
+    uint32_t frame = 0;
+};
+
+inline Nv2aDmaObjectWords decode_nv2a_dma_object(std::span<const uint32_t> ramin,
+                                                  uint32_t byte_offset) {
+    if ((byte_offset & 3) != 0) return {};
+    const std::size_t word_offset = byte_offset / sizeof(uint32_t);
+    if (word_offset > ramin.size() || ramin.size() - word_offset < 3) {
+        Nv2aDmaObjectWords result;
+        result.status = Nv2aDmaObjectStatus::truncated;
+        return result;
+    }
+
+    return {Nv2aDmaObjectStatus::ok, ramin[word_offset], ramin[word_offset + 1],
+            ramin[word_offset + 2]};
+}
+
 class Nv2aPfifoState {
 public:
     void set_channel_dma_enabled(uint8_t channel, bool enabled) {

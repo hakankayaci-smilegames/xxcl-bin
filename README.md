@@ -10,7 +10,7 @@ SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerl
 
 NV2A için test edilebilir bir PFIFO kayıt durumu eklendi ve worker’a bağlandı. Etkin DMA kanalında USER DMA PUT PFIFO’ya aktarılıyor; PFIFO GET ilerlemesi USER GET görünümüne yansıtılıyor. Bu eşleme oyun beklemesini tek başına çözmüyor: GET’i ilerletecek pushbuffer komutları henüz yürütülmüyor.
 
-Pushbuffer için de yalnızca komut başlığını ve bildirilen veri uzunluğunu kontrol eden bir çözücü var. Kesik veya geçersiz paket için tüketim miktarı sıfırdır. Henüz NV2A worker’a bağlanmadı; çalışan oyunun kuyruğu bu nedenle hâlâ işlenmiyor.
+Pushbuffer için komut başlığı/veri uzunluğu ve RAMIN’deki DMA nesnesinin üç kelimelik alanı sınır kontrolüyle okunabiliyor. Kesik veya geçersiz veri için tüketim miktarı sıfırdır. Bu çözücüler henüz NV2A worker’a bağlanmadı; çalışan oyunun kuyruğu bu nedenle hâlâ işlenmiyor.
 
 ## 🏗️ Mimari ve Şematik (Architecture)
 

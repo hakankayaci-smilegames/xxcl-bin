@@ -148,6 +148,30 @@ void test_pio_or_disabled_channel_is_not_dma_synchronized() {
             "inactive channel must not copy USER PUT into PFIFO");
 }
 
+void test_dma_object_words_are_read_from_the_requested_ramin_offset() {
+    const std::array<uint32_t, 6> ramin{
+        0, 0, 0, 0x0000B002, 0x07FFAFFf, 0x00000003
+    };
+    const auto object = xbe::kernel::decode_nv2a_dma_object(ramin, 12);
+
+    require(object.status == xbe::kernel::Nv2aDmaObjectStatus::ok,
+            "complete aligned DMA object must decode");
+    require(object.flags == 0x0000B002 && object.limit == 0x07FFAFFf &&
+                object.frame == 3,
+            "DMA object must preserve its three source words");
+}
+
+void test_dma_object_decoder_rejects_misaligned_and_truncated_inputs() {
+    const std::array<uint32_t, 6> ramin{};
+    const auto misaligned = xbe::kernel::decode_nv2a_dma_object(ramin, 2);
+    const auto truncated = xbe::kernel::decode_nv2a_dma_object(ramin, 20);
+
+    require(misaligned.status == xbe::kernel::Nv2aDmaObjectStatus::invalid_offset,
+            "unaligned DMA object address must be rejected");
+    require(truncated.status == xbe::kernel::Nv2aDmaObjectStatus::truncated,
+            "DMA object extending beyond RAMIN must be rejected");
+}
+
 } // namespace
 
 int main() {
@@ -162,5 +186,7 @@ int main() {
     test_active_dma_register_sync_copies_user_submission_to_pfifo();
     test_active_dma_register_sync_mirrors_completed_get_to_user();
     test_pio_or_disabled_channel_is_not_dma_synchronized();
+    test_dma_object_words_are_read_from_the_requested_ramin_offset();
+    test_dma_object_decoder_rejects_misaligned_and_truncated_inputs();
     return 0;
 }
