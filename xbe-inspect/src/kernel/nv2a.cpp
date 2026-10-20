@@ -22,8 +22,11 @@ void* nv2a_worker_loop(void* arg) {
     Nv2aFifoObserver fifo_observer;
     auto* fifo_dma_put = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_put_address);
     auto* fifo_dma_get = reinterpret_cast<volatile uint32_t*>(nv2a_fifo_dma_get_address);
+    auto* pfb_write_buffer_cache = reinterpret_cast<volatile uint32_t*>(nv2a_pfb_write_buffer_cache_address);
 
     while (g_nv2a_running.load()) {
+        nv2a_complete_pfb_write_buffer_flush(pfb_write_buffer_cache);
+
         // PTIMER ilerletmesi mevcut saat davranışını korur.
         if (ptimer_time_0) {
             *ptimer_time_0 += 1000;

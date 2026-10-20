@@ -2,6 +2,9 @@
 
 ## Current checkpoint
 
+- GDB incelemesi, ikinci açılışın guest tarafında `0x001A1C40` noktasında `0xFD100410` kaydındaki `0x10000` bitinin temizlenmesini beklediğini gösterdi. Bu adres NV2A `NV_PFB_WBC` yazı belleği aktarım kaydıdır; bu katmanda yazı belleği önbelleği modellenmediğinden kod artık aktarımın hemen tamamlandığını bildiriyor. Yeni NV2A sözleşme kontrolü bu davranışı kapsıyor. Kaynak ve `./xxcl` hedefi derlendi; yeni izole çalışmada guest bu noktayı geçmiş durumda.
+- Yeni izole ikinci açılışta GDB guest'i `0x001A3238` civarında, `NV_USER_DMA_GET` ile `NV_USER_DMA_PUT` değerlerinin eşit olmasını bekleyen döngüde yakaladı. USER alanında PUT (`0xFD800040`) `0x04AD8000`, GET (`0xFD800044`) `0`; PFIFO Cache1 DMA PUT/GET (`0xFD003240/244`) ikisi de `0`. NV2A referansında USER GET/PUT okumaları ortak PFIFO DMA kayıtlarına bağlıdır. Mevcut düz bellek eşlemesi bu ilişkiyi kurmuyor. Komut tüketimi veya gerçek çizim henüz yok; GET'i zorla PUT'a eşitlemek komutları atlayacağı için yapılmadı.
+
 - The source builds in `/tmp/xxcl-debug-build`; all 8 CTest targets pass, including a new NV2A contract target for PFIFO register addresses and non-mutating pending-queue observation.
 - The VFS now resolves Xbox drive paths and symbolic links beneath a configurable host root. File handles are tracked and validated; create dispositions, explicit/current offsets, close, supported file/volume queries, and CD-ROM write protection have contract checks.
 - `NtCreateFile` (Ordinal 190) is already implemented and registered. The previous note that it was missing was stale.
@@ -15,6 +18,6 @@
 
 ## Next move
 
-Run a fresh isolated integration launch to capture the real NV2A PFIFO DMA GET/PUT/STATUS values, then identify the DMA object and pushbuffer memory before implementing a generic command parser. The DSP worker remains at its recurring DMA EOL poll around `PC=0x121`. Continue the run → diagnose → implement a general subsystem behavior → test → rerun loop. The shortest drawing milestone remains a guest pushbuffer clear reaching a host graphics backend; pushbuffer command execution is not implemented.
+Next, model the generic NV_USER DMA GET/PUT aliases and trace how the game's DMA instance points to its command buffer. Then implement real command consumption; do not force GET=PUT just to pass the wait. The DSP worker remains at its recurring DMA EOL poll around `PC=0x121`. The shortest drawing milestone remains a guest pushbuffer clear reaching a host graphics backend; pushbuffer command execution is not implemented.
 
 Keep Xbox export signatures and calling conventions stable. Keep game-specific behavior out of generic VFS, file, and device dispatch; implement device behavior in device backends.

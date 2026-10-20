@@ -4,9 +4,9 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 ## Güncel Durum
 
-XBE yükleme, kernel uyumluluğu, APU/DSP firmware başlatma ve gözlenen GP DSP DMA aktarımı üzerinde çalışılıyor. DSP56300 NOP (`0x000000`), unsigned karşılaştırma `CMPU X0,A` (`0x0C1FF8`), kısa koşullu `BCC` ve `SUB X0,A` desteği eklendi. Önceki sürüm `CMPU` komutunu yanlışlıkla kısa JMP sanıyordu; bu hata düzeltildi. Temiz geçici HDD kökündeki ilk açılış reboot istedi. Sonraki açılışta DSP, `PC=0x041`’deki çıkarma komutunu geçip DMA bitişini bekleyen `PC=0x121` döngüsüne ulaştı. İzde DMA EOL bayrağının (`X:$C5` bit 7) set edilip temizlendiği görüldü. Önceki NV2A sayaç ölçümü yanlış USER adres alanını okuduğu için geçersizdir. PFIFO kayıtlarını düzelttik; yeni çalışmada DSP ve GPU ilerlemesi tekrar doğrulanacak.
+XBE yükleme, kernel uyumluluğu ve APU/DSP firmware başlatma üzerinde çalışılıyor. Temiz geçici HDD kökündeki ilk açılış reboot istedi. NV2A yazı belleği beklemesi için eklenen model ikinci açılışta ilerleme sağladı. Oyun şimdi GPU komut kuyruğunun bitmesini bekliyor: USER yazma ucu `0x04AD8000`, okuma ucu `0`; komut kuyruğu henüz çalıştırılmıyor. Gerçek çizim başlamadı.
 
-SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Önceki tanı kodu yanlışlıkla `0xFD800040/44` USER alanını FIFO DMA işaretçileri sanmış ve GET'i PUT'a kopyalamıştı; bu sonuçlar geçersizdir. Worker artık NV2A PFIFO DMA kayıtlarını (`0xFD003240/244`) ve STATUS'u (`0xFD003214`) gözlemler, register'ları ilerletmez veya sahte busy durumu temizlemez. `GPU PENDING` sayacı, yeni GET/PUT farkı gözlem örneklerini sayar; pushbuffer komutlarının işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
+SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Worker, NV2A'nın `0xFD100410` yazı belleği aktarım kaydını “bekleyen aktarım yok” durumunda tutar; burada gerçek bir yazı belleği önbelleği modellenmiyor. PFIFO Cache1 DMA kayıtları (`0xFD003240/244`) ve USER alanındaki karşılıkları (`0xFD800040/44`) henüz birbirine bağlı değil; oyun USER PUT'u `0x04AD8000` yapmışken GET `0` kalıyor. `GPU PENDING` sayacı komutların işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
 
 ## 🏗️ Mimari ve Şematik (Architecture)
 
@@ -98,8 +98,8 @@ flowchart TD
 
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
-1. **GP DSP firmware yürütmesi**:
-   - NOP, `CMPU X0,A`, kısa `BCC` ve `SUB X0,A` davranışları sözleşme testleriyle kapsandı. Sega GT geçici HDD koşusunda DSP, DMA EOL bayrağını bekleyen `PC=0x121` döngüsüne ulaştı. Sıradaki çizim odaklı adım, guest’in NV2A FIFO’ya komut gönderip göndermediğini izlemek ve ilk genel pushbuffer clear yolunu belirlemek.
+1. **NV2A komut kuyruğu ve ilk çizim**:
+   - `NV_USER_DMA_GET/PUT` kayıtlarını PFIFO DMA kayıtlarına bağla, DMA nesnesi ile komut belleğini takip et ve komutları gerçekten tüket. GET değerini yalnız beklemeyi atlatmak için PUT'a eşitleme.
 2. **D3D ve NV2A gerçek çizimi**:
    - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
 3. **Gamepad / Input entegrasyonu**:

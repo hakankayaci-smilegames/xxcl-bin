@@ -7,6 +7,12 @@ namespace xbe::kernel {
 inline constexpr uintptr_t nv2a_fifo_dma_put_address = 0xFD003240;
 inline constexpr uintptr_t nv2a_fifo_dma_get_address = 0xFD003244;
 inline constexpr uintptr_t nv2a_fifo_status_address = 0xFD003214;
+inline constexpr uintptr_t nv2a_pfb_write_buffer_cache_address = 0xFD100410;
+
+inline void nv2a_complete_pfb_write_buffer_flush(volatile uint32_t* register_value) {
+    // No writeback cache is modeled, so the flush has completed immediately.
+    *register_value = 0;
+}
 
 class Nv2aFifoObserver {
 public:

@@ -19,6 +19,13 @@ void test_fifo_register_addresses() {
             "PFIFO DMA GET must use NV_PFIFO_CACHE1_DMA_GET");
 }
 
+void test_pfb_write_buffer_flush_completes_immediately() {
+    volatile uint32_t register_value = 1u << 16;
+    xbe::kernel::nv2a_complete_pfb_write_buffer_flush(&register_value);
+    require(register_value == 0,
+            "unmodeled PFB writeback cache must report no pending flush");
+}
+
 void test_pending_observation_is_counted_once_without_advancing_get() {
     xbe::kernel::Nv2aFifoObserver observer;
     require(!observer.observe(0, 0), "empty FIFO must not count as pending");
@@ -33,6 +40,7 @@ void test_pending_observation_is_counted_once_without_advancing_get() {
 
 int main() {
     test_fifo_register_addresses();
+    test_pfb_write_buffer_flush_completes_immediately();
     test_pending_observation_is_counted_once_without_advancing_get();
     return 0;
 }
