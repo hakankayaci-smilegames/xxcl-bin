@@ -10,6 +10,8 @@ SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerl
 
 NV2A için test edilebilir bir PFIFO kayıt durumu eklendi. Bu, seçili ve DMA kipindeki kanalda USER DMA GET/PUT/REF kayıtlarının ortak PFIFO değerlerini kullanması gerektiğini tarif ediyor; şu an henüz gerçek MMIO erişim yoluna bağlı değil. Bu nedenle runtime’daki USER/PFIFO ayrılığı ve oyunun beklemesi bu değişiklikle çözülmüş sayılmaz.
 
+Pushbuffer için de yalnızca komut başlığını ve bildirilen veri uzunluğunu kontrol eden bir çözücü var. Kesik veya geçersiz paket için tüketim miktarı sıfırdır. Henüz NV2A worker’a bağlanmadı; çalışan oyunun kuyruğu bu nedenle hâlâ işlenmiyor.
+
 ## 🏗️ Mimari ve Şematik (Architecture)
 
 Aşağıdaki şema, XXCL'nin donanım kaynaklarını ve kernel çağrılarını (HLE) nasıl Linux POSIX fonksiyonlarına bağladığını özetlemektedir:

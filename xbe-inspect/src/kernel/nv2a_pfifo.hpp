@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
+#include <span>
 
 namespace xbe::kernel {
 
@@ -9,6 +11,47 @@ enum class Nv2aUserRegister : uint8_t {
     dma_get,
     reference
 };
+
+enum class Nv2aPacketStatus : uint8_t {
+    ok,
+    truncated,
+    invalid_header
+};
+
+struct Nv2aMethodPacket {
+    Nv2aPacketStatus status = Nv2aPacketStatus::invalid_header;
+    uint32_t method = 0;
+    uint8_t subchannel = 0;
+    uint16_t method_count = 0;
+    bool incrementing = false;
+    std::size_t consumed_words = 0;
+    std::span<const uint32_t> payload{};
+};
+
+inline Nv2aMethodPacket decode_nv2a_method_packet(std::span<const uint32_t> words) {
+    if (words.empty()) return {};
+
+    const uint32_t header = words.front();
+    const uint32_t command = header & 0xE0030003;
+    if (command != 0 && command != 0x40000000) return {};
+
+    const auto count = static_cast<uint16_t>((header >> 18) & 0x7ff);
+    if (count > words.size() - 1) {
+        Nv2aMethodPacket result;
+        result.status = Nv2aPacketStatus::truncated;
+        return result;
+    }
+
+    Nv2aMethodPacket result;
+    result.status = Nv2aPacketStatus::ok;
+    result.method = header & 0x1ffc;
+    result.subchannel = static_cast<uint8_t>((header >> 13) & 0x7);
+    result.method_count = count;
+    result.incrementing = command == 0;
+    result.consumed_words = static_cast<std::size_t>(count) + 1;
+    result.payload = words.subspan(1, count);
+    return result;
+}
 
 class Nv2aPfifoState {
 public:

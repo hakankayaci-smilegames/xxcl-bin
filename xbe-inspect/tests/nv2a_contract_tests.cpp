@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <array>
 
 namespace {
 
@@ -67,6 +68,40 @@ void test_inactive_user_channel_does_not_change_active_fifo() {
             "a rejected USER write must leave PFIFO DMA PUT unchanged");
 }
 
+void test_incrementing_method_packet_is_decoded_without_consuming_more_words() {
+    const std::array<uint32_t, 3> words{0x00080060, 0x11223344, 0x55667788};
+    const auto packet = xbe::kernel::decode_nv2a_method_packet(words);
+
+    require(packet.status == xbe::kernel::Nv2aPacketStatus::ok,
+            "valid incrementing method packet must decode");
+    require(packet.method == 0x60 && packet.subchannel == 0,
+            "packet header must produce the literal method and subchannel");
+    require(packet.incrementing && packet.method_count == 2,
+            "incrementing packet must preserve its count");
+    require(packet.consumed_words == 3 && packet.payload[1] == 0x55667788,
+            "decoder must expose only the declared payload words");
+}
+
+void test_truncated_method_packet_is_not_reported_as_consumed() {
+    const std::array<uint32_t, 2> words{0x00080060, 0x11223344};
+    const auto packet = xbe::kernel::decode_nv2a_method_packet(words);
+
+    require(packet.status == xbe::kernel::Nv2aPacketStatus::truncated,
+            "truncated payload must be rejected");
+    require(packet.consumed_words == 0,
+            "truncated packet must not advance the DMA GET position");
+}
+
+void test_reserved_method_header_is_rejected() {
+    const std::array<uint32_t, 1> words{0x20000000};
+    const auto packet = xbe::kernel::decode_nv2a_method_packet(words);
+
+    require(packet.status == xbe::kernel::Nv2aPacketStatus::invalid_header,
+            "reserved command header must not be accepted as a method packet");
+    require(packet.consumed_words == 0,
+            "invalid header must not advance the DMA GET position");
+}
+
 } // namespace
 
 int main() {
@@ -75,5 +110,8 @@ int main() {
     test_pending_observation_is_counted_once_without_advancing_get();
     test_active_dma_user_registers_share_pfifo_state();
     test_inactive_user_channel_does_not_change_active_fifo();
+    test_incrementing_method_packet_is_decoded_without_consuming_more_words();
+    test_truncated_method_packet_is_not_reported_as_consumed();
+    test_reserved_method_header_is_rejected();
     return 0;
 }
