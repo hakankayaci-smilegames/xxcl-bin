@@ -41,12 +41,12 @@ void test_active_dma_user_registers_share_pfifo_state() {
     xbe::kernel::Nv2aPfifoState fifo;
     fifo.set_channel_dma_enabled(3, true);
     fifo.set_active_channel(3);
-    fifo.write_dma_put(0x04AD8000);
+    fifo.write_dma_put(0x23456000);
 
     uint32_t value = 0;
     require(fifo.read_user_register(3, xbe::kernel::Nv2aUserRegister::dma_put, value),
             "active DMA channel USER PUT must be readable");
-    require(value == 0x04AD8000,
+    require(value == 0x23456000,
             "USER PUT must read the value held by PFIFO DMA PUT");
 
     require(fifo.write_user_register(3, xbe::kernel::Nv2aUserRegister::dma_get, 0x40),
