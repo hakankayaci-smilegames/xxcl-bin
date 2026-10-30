@@ -21,6 +21,7 @@ public:
     static constexpr uint32_t bootstrap_word_count = 0x800;
 
     bool bootstrap(uint32_t sge_table_physical, uint32_t max_sge);
+    void set_scratch_mapping(uint32_t sge_table_physical, uint32_t max_sge);
     uint32_t program_word(uint32_t address) const;
     uint32_t peripheral_word(bool y_space, uint8_t address);
     uint32_t register_word(uint8_t index) const;

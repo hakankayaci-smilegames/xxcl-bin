@@ -95,6 +95,57 @@ int main() {
     if (xbe::kernel::apu_run_gp_dsp(32) != 0) return 1;
     if (!xbe::kernel::apu_gp_program_read(0, dsp_word) || dsp_word != 0x00123456) return 1;
 
+    // A running DSP must use the updated GP scratch limit without a reboot.
+    constexpr uint32_t third_page_physical = 0x00962000;
+    void* third_page = nullptr;
+    if (posix_memalign(&third_page, 0x1000, 0x1000) != 0) return 2;
+    std::memset(third_page, 0, 0x1000);
+    if (xbe::kernel::physical_memory_register(third_page, 0x1000, 0x1000,
+            third_page_physical, 0x00962fff) != third_page_physical) return 2;
+    dma_entries[4] = third_page_physical;
+
+    // The program writes one DSP word through a terminal scratch DMA node.
+    const uint32_t dma_program[] = {
+        0x44f400, 0x4000,   0x442000,
+        0x44f400, 0x49e2,   0x442100,
+        0x44f400, 0x1,      0x442200,
+        0x44f400, 0x30,     0x442300,
+        0x44f400, 0x2000,   0x442400,
+        0x44f400, 0x0,      0x442500,
+        0x44f400, 0x0,      0x442600,
+        0x44f400, 0x123456, 0x443000,
+        0x08f494, 0x20, 0x08f496, 0x1,
+    };
+    std::memcpy(guest_bytes, dma_program, sizeof(dma_program));
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 1) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 3) return 3;
+    if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+        *static_cast<uint32_t*>(third_page) != 0) return 4;
+
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 2 ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 2) ||
+        xbe::kernel::apu_process_mmio_writes() != 1) return 5;
+    if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+        *static_cast<uint32_t*>(third_page) != 0x00123456) return 6;
+
+    // The table base may also change while the loaded DSP program is running.
+    *static_cast<uint32_t*>(third_page) = 0;
+    dma_entries[4] = 0;
+    entries[4] = third_page_physical;
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 2 ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x2040, sge_physical) ||
+        xbe::kernel::apu_process_mmio_writes() != 1) return 7;
+    if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+        *static_cast<uint32_t*>(third_page) != 0x00123456) return 8;
+
+    xbe::kernel::physical_memory_unregister(third_page);
+    std::free(third_page);
     xbe::kernel::physical_memory_unregister(dma_pages);
     xbe::kernel::physical_memory_unregister(dma_table);
     std::free(dma_pages);

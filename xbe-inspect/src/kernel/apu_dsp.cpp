@@ -68,6 +68,11 @@ bool dsp_condition_true(uint8_t condition, uint32_t status) {
 
 } // namespace
 
+void ApuDspCore::set_scratch_mapping(uint32_t sge_table_physical, uint32_t max_sge) {
+    sge_table_physical_ = sge_table_physical;
+    max_sge_ = max_sge;
+}
+
 bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
     constexpr size_t scratch_size = bootstrap_word_count * sizeof(uint32_t);
     std::array<std::byte, scratch_size> scratch{};
@@ -78,8 +83,7 @@ bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
         loaded_program[index] = load_le_word(scratch.data() + index * sizeof(uint32_t)) & dsp_word_mask;
     }
     std::copy(loaded_program.begin(), loaded_program.end(), program_.begin());
-    sge_table_physical_ = sge_table_physical;
-    max_sge_ = max_sge;
+    set_scratch_mapping(sge_table_physical, max_sge);
     x_peripherals_.fill(0);
     y_peripherals_.fill(0);
     dma_.reset();

@@ -2,6 +2,7 @@
 
 ## Current checkpoint
 
+- 30 Ekim 2026: GP DSP, scratch tablosunun adresini ve en yüksek SGE indeksini yalnızca bootstrap sırasında saklıyordu. Oyun limiti `8`'den `0x7D`'ye çıkarsa bile DSP eski sınırda kalıyordu; `0xB000` scratch ofsetli üçüncü DMA aktarımı reddedilip DSP `PC=0x121` döngüsünde bekliyordu. Canlı register güncellemeleri artık DSP'ye iletiliyor; temiz HDD koşusunda söz konusu üçüncü aktarım (`next=0x00401E`) tamamlandı. GDB hem register hem DSP limitini `0x7D` olarak doğruladı. Oyun thread'i hâlâ `0x00162E2A` civarındaki ses işlemi beklemesinde; bunun sonraki nedeni henüz belirlenmedi. İlk oyun görüntüsü hâlâ çizilmedi.
 - GDB incelemesi, ikinci açılışın guest tarafında `0x001A1C40` noktasında `0xFD100410` kaydındaki `0x10000` bitinin temizlenmesini beklediğini gösterdi. Bu adres NV2A `NV_PFB_WBC` yazı belleği aktarım kaydıdır; bu katmanda yazı belleği önbelleği modellenmediğinden kod artık aktarımın hemen tamamlandığını bildiriyor. Yeni NV2A sözleşme kontrolü bu davranışı kapsıyor. Kaynak ve `./xxcl` hedefi derlendi; yeni izole çalışmada guest bu noktayı geçmiş durumda.
 - 20 Ekim 2026'daki temiz HDD koşularında ikinci açılış, aktif DMA nesnesini RAMIN `+0x11C0` konumunda buldu (`flags=0xB002`, `limit=0x07FFAFFF`, `frame=3`). Host'un rastgele adresleri bazen bu nesnenin sınırını aşıyordu. `MmAllocateContiguousMemoryEx` artık bitişik alanları nesnenin kabul ettiği DMA adres aralığında tahsis ediyor. İki ayrı temiz çalıştırmada JUMP hedefi `0x0470D000` oldu ve PFIFO GET/PUT eşitlendi. GDB watchpoint'i, guest'in ardından `0x80000000` konumuna `0xDEADBEEF` yazdığını ve `EIP=0x001A3255` konumuna ilerlediğini doğruladı; yani önceki bekleme döngüsü gerçekten geçildi. Yöntem paketleri, temizleme ve çizim henüz yürütülmüyor.
 
@@ -18,6 +19,6 @@
 
 ## Next move
 
-Next, find the next runtime wait or GPU submission after `0x001A3255`. Then read the next pushbuffer command safely and add general method handling; do not advance GET for unreadable or unsupported data. The DSP worker remains at its recurring DMA EOL poll around `PC=0x121`. The first visible drawing milestone remains a real guest clear reaching the host window; no game image has been rendered yet.
+Next, trace why the guest still waits at `0x00162E2A` despite the previously failing DSP scratch DMA completing. Follow the actual guest/DSP data and completion signals; do not clear the guest's flag without the relevant operation. Then resume GPU command handling toward the first guest clear in the host window.
 
 Keep Xbox export signatures and calling conventions stable. Keep game-specific behavior out of generic VFS, file, and device dispatch; implement device behavior in device backends.

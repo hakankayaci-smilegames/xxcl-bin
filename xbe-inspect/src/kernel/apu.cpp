@@ -111,10 +111,12 @@ bool store_sge_entry(uint32_t handle, uint32_t address) {
 void process_mmio_write(const MmioWrite& write) {
     if (write.address == apu_base + papu_gpsaddr) {
         gp_sge_base = write.value;
+        gp_dsp.set_scratch_mapping(gp_sge_base, gp_max_sge);
         return;
     }
     if (write.address == apu_base + papu_gpsmax_sge) {
         gp_max_sge = write.value;
+        gp_dsp.set_scratch_mapping(gp_sge_base, gp_max_sge);
         return;
     }
     if (write.address == apu_base + gp_region + gp_reset_register) {
