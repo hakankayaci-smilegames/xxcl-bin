@@ -1,0 +1,1140 @@
+Reading symbols from ./xbe-inspect/build/xbe-inspect...
+(No debugging symbols found in ./xbe-inspect/build/xbe-inspect)
+(gdb) (gdb) (gdb) Starting program: /home/hakan/Desktop/xxcl-bin/xbe-inspect/build/xbe-inspect /home/hakan/Desktop/Sega\ GT\ 2002\ \(Europe\)\ \(En,Ja,Fr,De,Es,It\)/default.xbe --run
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/x86_64-linux-gnu/libthread_db.so.1".
+[DEBUG] 0x164 offsetindeki thunk degeri (1093c) gecerli degil. 0x150-0x180 arasi taranacak...
+[DEBUG] Gecerli Thunk Adresi offset 0x158 konumunda bulundu! Raw: 0x5b762b16, Decoded VA: 0x1b6ba0
+[DEBUG] Kernel Thunk Dosya Ofseti (File Offset): 0x1a9000
+[DEBUG] Thunk tablosunda 0 okundu, tablo sonu.
+
+[36m=== XBE INsPECTOR ===[0m
+
+[33m[Genel Bilgiler][0m
+[1mDosya Adi                [0m: [0m/home/hakan/Desktop/Sega GT 2002 (Europe) (En,Ja,Fr,De,Es,It)/default.xbe[0m
+[1mTitle Name (Oyun Adi)    [0m: [32msegaGT 2002[0m
+[1mBase Address             [0m: [36m0x00010000[0m
+
+[33m[Entry Point][0m
+[1mEntry Point (Raw)        [0m: [0m0xA8EC3C56[0m
+[1mEntry Point (Retail)     [0m: [32m0x00106BFD[0m
+[1mEntry Point (Debug)      [0m: [34m0x3C69A11D[0m
+
+[33m[Kernel Image Thunk][0m
+[1mThunk Addr (Raw)         [0m: [0m0x5B762B16[0m
+[1mThunk Addr (Retail)      [0m: [32m0x001B6BA0[0m
+
+[33m[Import Edilen Kernel Fonksiyonlari (121 Ordinal)][0m
+Ordinal: 294   Ordinal: 277   Ordinal: 291   Ordinal:   5   
+Ordinal: 128   Ordinal: 305   Ordinal: 156   Ordinal: 304   
+Ordinal: 233   Ordinal: 219   Ordinal: 236   Ordinal: 226   
+Ordinal: 211   Ordinal: 218   Ordinal: 198   Ordinal: 200   
+Ordinal: 196   Ordinal: 187   Ordinal: 190   Ordinal: 289   
+Ordinal: 172   Ordinal: 202   Ordinal: 167   Ordinal: 336   
+Ordinal: 335   Ordinal: 337   Ordinal: 323   Ordinal: 325   
+Ordinal: 354   Ordinal: 189   Ordinal:  16   Ordinal: 225   
+Ordinal: 186   Ordinal: 234   Ordinal:  99   Ordinal: 166   
+Ordinal: 180   Ordinal: 182   Ordinal: 171   Ordinal: 179   
+Ordinal: 250   Ordinal: 143   Ordinal: 246   Ordinal: 259   
+Ordinal: 124   Ordinal: 144   Ordinal: 231   Ordinal: 224   
+Ordinal: 302   Ordinal: 238   Ordinal: 258   Ordinal: 255   
+Ordinal: 161   Ordinal: 129   Ordinal: 301   Ordinal:  24   
+Ordinal: 356   Ordinal:  40   Ordinal:  67   Ordinal: 215   
+Ordinal: 203   Ordinal:  69   Ordinal: 210   Ordinal: 207   
+Ordinal: 178   Ordinal: 165   Ordinal: 164   Ordinal:  49   
+Ordinal: 279   Ordinal: 327   Ordinal: 328   Ordinal:  65   
+Ordinal:  14   Ordinal: 145   Ordinal: 159   Ordinal: 113   
+Ordinal: 107   Ordinal:  74   Ordinal:  91   Ordinal: 308   
+Ordinal:  17   Ordinal: 149   Ordinal:  97   Ordinal: 199   
+Ordinal: 184   Ordinal: 269   Ordinal: 217   Ordinal: 322   
+Ordinal:  83   Ordinal:  87   Ordinal:  81   Ordinal: 359   
+Ordinal: 358   Ordinal: 324   Ordinal:  44   Ordinal: 160   
+Ordinal:  47   Ordinal:  98   Ordinal: 109   Ordinal: 151   
+Ordinal: 360   Ordinal: 173   Ordinal: 175   Ordinal: 119   
+Ordinal: 176   Ordinal:   1   Ordinal:   2   Ordinal:   4   
+Ordinal:   3   Ordinal: 100   Ordinal:  46   Ordinal: 168   
+Ordinal:   8   Ordinal: 142   Ordinal: 139   Ordinal:  23   
+Ordinal:  15   Ordinal: 137   Ordinal: 153   Ordinal: 312   
+Ordinal:  95   
+
+[33m[Section Tablosu (23 Bolum)][0m
+[1mIsim           V.Address      V.Size         R.Address      R.Size         [0m
+---------------------------------------------------------------------------
+.text          0x00011000   0x00143530   0x00001000   0x00143530
+D3DX           0x00154540   0x00008BF0   0x00145000   0x00008BE8
+XGRPH          0x0015D140   0x000023FC   0x0014E000   0x000023FC
+DSOUND         0x0015F540   0x0001E02C   0x00151000   0x0001DDE4
+WMADEC         0x0017D580   0x000197F8   0x0016F000   0x000197F8
+PSGSFD00       0x00196D80   0x00003310   0x00189000   0x00003310
+PSGSFD_I       0x0019A0A0   0x000003D0   0x0018D000   0x000003D0
+PSGSFD_B       0x0019A480   0x000008D0   0x0018E000   0x000008D0
+PSGSFD_P       0x0019AD60   0x00000650   0x0018F000   0x00000650
+D3D            0x0019B3C0   0x00013AFC   0x00190000   0x00010480
+XPP            0x001AEEC0   0x00007CD4   0x001A1000   0x00007CD4
+.rdata         0x001B6BA0   0x00025C58   0x001A9000   0x00025C48
+.data          0x001DC800   0x0072B81C   0x001CF000   0x00195E30
+langpo         0x00908020   0x0001ACE0   0x003ED000   0x0001ACE0
+langit         0x00922D00   0x0001CF10   0x003D0000   0x0001CF10
+langsp         0x0093FC20   0x0001D358   0x003B2000   0x0001D358
+langfr         0x0095CF80   0x0001BB18   0x00396000   0x0001BB18
+langdu         0x00978AA0   0x0001D698   0x00408000   0x0001D698
+langus         0x00996140   0x0001AAB8   0x0037B000   0x0001AAB8
+langjp         0x009B0C00   0x0000D1D8   0x0036D000   0x0000D1D8
+DOLBY          0x009BDDE0   0x00007180   0x00365000   0x0000716C
+$$XTIMAGE      0x009C4F60   0x00002800   0x00426000   0x00002800
+$$XSIMAGE      0x009C7760   0x00001000   0x00429000   0x00001000
+
+[33m
+[Baslatiliyor...][0m
+[MM] KSEG0 (0x80000000 - 64MB) fiziksel bellek aynasi basariyla eslendi.
+[MM] KSEG1 (0xA0000000 - 64MB) fiziksel bellek aynasi basariyla eslendi.
+[NV2A] NV2A MMIO sahte donanim alani (0xFD000000 - 16MB) basariyla eslendi.
+[HAL] USB MMIO sahte donanim alani (0xFED00000 - 64KB) basariyla eslendi.
+[HAL] APIC MMIO sahte donanim alani (0xFEC00000 - 64KB) basariyla eslendi.
+[HAL] APU MMIO sahte donanim alani (0xFE800000 - 512KB) basariyla eslendi.
+[New Thread 0xc11c8b40 (LWP 38549)]
+[NV2A] Asenkron GPU Worker Thread (FIFO Puller / PTIMER) baslatildi.
+[New Thread 0xb398eb40 (LWP 38556)]
+[New Thread 0xb2fffb40 (LWP 38557)]
+[New Thread 0xb25ffb40 (LWP 38558)]
+[New Thread 0xb1bffb40 (LWP 38559)]
+[Thread 0xb1bffb40 (LWP 38559) exited]
+[Thread 0xb25ffb40 (LWP 38558) exited]
+[New Thread 0xb25ffb40 (LWP 38560)]
+[New Thread 0xb1bffb40 (LWP 38561)]
+[VIDEO] *** TEBRIKLER! HOST PENCERESI (640x480) BASARIYLA ACILDI! ***
+[LOADER] Bellek 0x10000 (Aligned Base) adresine basariyla allocate edildi.
+[LOADER] XBE Header 0x10000 adresine yuklendi.
+[LOADER] .text bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x11000)
+[LOADER] D3DX bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x154540)
+[LOADER] XGRPH bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x15D140)
+[LOADER] DSOUND bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x15F540)
+[LOADER] WMADEC bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x17D580)
+[LOADER] PSGSFD00 bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x196D80)
+[LOADER] PSGSFD_I bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x19A0A0)
+[LOADER] PSGSFD_B bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x19A480)
+[LOADER] PSGSFD_P bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x19AD60)
+[LOADER] D3D bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x19B3C0)
+[LOADER] XPP bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x1AEEC0)
+[LOADER] .rdata bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x1B6BA0)
+[LOADER] .data bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x1DC800)
+[LOADER] langpo bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x908020)
+[LOADER] langit bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x922D00)
+[LOADER] langsp bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x93FC20)
+[LOADER] langfr bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x95CF80)
+[LOADER] langdu bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x978AA0)
+[LOADER] langus bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x996140)
+[LOADER] langjp bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x9B0C00)
+[LOADER] DOLBY bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x9BDDE0)
+[LOADER] $$XTIMAGE bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x9C4F60)
+[LOADER] $$XSIMAGE bolumu yuklendi ve yetkilendirildi. (Virtual Address: 0x9C7760)
+[KERNEL HOOK MAP] Ordinal 294 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 277 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 291 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 5 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 128 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 305 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 156 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 304 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 233 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 219 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 236 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 226 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 211 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 218 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 198 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 200 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 196 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 187 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 190 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 289 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 172 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 202 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 167 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 336 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 335 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 337 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 323 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 325 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 354 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 189 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 16 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 225 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 186 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 234 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 99 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 166 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 180 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 182 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 171 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 179 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 250 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 143 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 246 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 259 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 124 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 144 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 231 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 224 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 302 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 238 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 258 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 255 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 161 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 129 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 301 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 24 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 356 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 40 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 67 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 215 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 203 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 69 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 210 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 207 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 178 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 165 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 164 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 49 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 279 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 327 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 328 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 65 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 14 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 145 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 159 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 113 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 107 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 74 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 91 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 308 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 17 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 149 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 97 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 199 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 184 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 269 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 217 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 322 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 83 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 87 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 81 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 359 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 358 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 324 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 44 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 160 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 47 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 98 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 109 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 151 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 360 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 173 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 175 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 119 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 176 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 1 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 2 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 4 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 3 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 100 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 46 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 168 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 8 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 142 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 139 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 23 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 15 -> NATIVE (__stdcall) baglandi.
+[KERNEL HOOK MAP] Ordinal 137 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 153 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 312 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL HOOK MAP] Ordinal 95 -> TRAMPOLINE (Desteklenmiyor) baglandi.
+[KERNEL] 121 adet kernel fonksiyonu kancalandi. (51 tanesi native hook).
+[LOADER] Entry Point (0x106BFD) cagiriliyor...
+[KPCR] Fake KPCR basariyla kuruldu. Base: 0x565831a0, FS Selector: 0x6B
+[KERNEL] PsCreateSystemThreadEx cagrildi.
+  ThreadHandle : 0xffffc2d0
+  StartRoutine : 0x00106B89
+  StartContext : 0x00000000
+[New Thread 0xb0fffb40 (LWP 38565)]
+[KERNEL] NtClose(Handle: 0x8899aabb) cagrildi.
+
+[1;32m[BASARILI][0m Entry Point calistirildi! Donus degeri (EAX): 1
+[KERNEL] Yeni Xbox Thread'i basliyor: 0x106b89
+[KERNEL] KeInitializeDpc(Dpc: 0x8e6f60, Routine: 0x10a58b, Context: (nil)) cagrildi.
+[KERNEL] KeInitializeTimerEx(Timer: 0x8e6f80, Type: 0) cagrildi.
+[KERNEL] ExQueryNonVolatileSetting(Index: 17, Length: 4) cagrildi.\n[KERNEL] RtlNtStatusToDosError(Status: 0x0) cagrildi.
+[KERNEL] KeSetTimer(Timer: 0x8e6f80, DueTimeLow: 3043332096, DueTimeHigh: 4294967245, Dpc: 0x8e6f60) cagrildi.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: (nil), Boyut: 1048576 bayt, AllocType: 0x2000
+[KERNEL] NtAllocateVirtualMemory -> Ayrilan Ptr: 0xb04ff000
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb04ff000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb04ff000, MEM_COMMIT simule ediliyor.
+[KERNEL] RtlInitializeCriticalSection(CS: 0xb04ff610) cagrildi.
+[KERNEL] NtOpenFile('\Device\CdRom0' -> './hdd/D', DesiredAccess: 0x80100000) cagrildi.
+[KERNEL] SCSI_PASS_THROUGH_DIRECT (Opcode: 0x5A, Page: 0x3E, TransferLen: 28) cagrildi.
+[KERNEL] SCSI_PASS_THROUGH_DIRECT (MODE SENSE 10) mocked for Page 3E!
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] NtOpenFile('\Device\Harddisk0\partition1\' -> './hdd/E/', DesiredAccess: 0x00100001) cagrildi.
+[KERNEL] NtQueryVolumeInformationFile(Handle: 0x1000e, Class: 3, Length: 24) cagrildi.
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] IoCreateSymbolicLink -> Link: '\??\D:' ===> Target: '\Device\CdRom0'
+[Detaching after vfork from child process 38566]
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\TDATA', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/TDATA'
+[KERNEL] NtCreateFile -> DIRECTORY BASARILI! Handle: 0x1000e (FD: 14)
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff164, Src: 0xb0fff020
+[KERNEL] RtlInitAnsiString Metin: '\Device\Harddisk0\partition1\TDATA\4947002c' (Uzunluk: 43)
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\TDATA\4947002c', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/TDATA/4947002c'
+[KERNEL] NtCreateFile -> DIRECTORY BASARILI! Handle: 0x1000e (FD: 14)
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] IoCreateSymbolicLink -> Link: '\??\T:' ===> Target: '\Device\Harddisk0\partition1\TDATA\4947002c'
+[Detaching after vfork from child process 38568]
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\UDATA', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/UDATA'
+[KERNEL] NtCreateFile -> DIRECTORY BASARILI! Handle: 0x1000e (FD: 14)
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff164, Src: 0xb0fff020
+[KERNEL] RtlInitAnsiString Metin: '\Device\Harddisk0\partition1\UDATA\4947002c' (Uzunluk: 43)
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\UDATA\4947002c', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/UDATA/4947002c'
+[KERNEL] NtCreateFile -> DIRECTORY BASARILI! Handle: 0x1000e (FD: 14)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeeec, Src: 0x1d2f7c
+[KERNEL] RtlInitAnsiString Metin: '$$XTINFO' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10898
+[KERNEL] RtlInitAnsiString Metin: '.text' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1089e
+[KERNEL] RtlInitAnsiString Metin: 'D3DX' (Uzunluk: 4)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a3
+[KERNEL] RtlInitAnsiString Metin: 'XGRPH' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a9
+[KERNEL] RtlInitAnsiString Metin: 'DSOUND' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b0
+[KERNEL] RtlInitAnsiString Metin: 'WMADEC' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b7
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD00' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c0
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_I' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c9
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_B' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108d2
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_P' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108db
+[KERNEL] RtlInitAnsiString Metin: 'D3D' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108df
+[KERNEL] RtlInitAnsiString Metin: 'XPP' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108e3
+[KERNEL] RtlInitAnsiString Metin: '.rdata' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108ea
+[KERNEL] RtlInitAnsiString Metin: '.data' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f0
+[KERNEL] RtlInitAnsiString Metin: 'langpo' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f7
+[KERNEL] RtlInitAnsiString Metin: 'langit' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108fe
+[KERNEL] RtlInitAnsiString Metin: 'langsp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10905
+[KERNEL] RtlInitAnsiString Metin: 'langfr' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1090c
+[KERNEL] RtlInitAnsiString Metin: 'langdu' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10913
+[KERNEL] RtlInitAnsiString Metin: 'langus' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1091a
+[KERNEL] RtlInitAnsiString Metin: 'langjp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10921
+[KERNEL] RtlInitAnsiString Metin: 'DOLBY' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10927
+[KERNEL] RtlInitAnsiString Metin: '$$XTIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10931
+[KERNEL] RtlInitAnsiString Metin: '$$XSIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeeec, Src: 0x1d2f70
+[KERNEL] RtlInitAnsiString Metin: '$$XTIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10898
+[KERNEL] RtlInitAnsiString Metin: '.text' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1089e
+[KERNEL] RtlInitAnsiString Metin: 'D3DX' (Uzunluk: 4)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a3
+[KERNEL] RtlInitAnsiString Metin: 'XGRPH' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a9
+[KERNEL] RtlInitAnsiString Metin: 'DSOUND' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b0
+[KERNEL] RtlInitAnsiString Metin: 'WMADEC' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b7
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD00' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c0
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_I' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c9
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_B' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108d2
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_P' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108db
+[KERNEL] RtlInitAnsiString Metin: 'D3D' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108df
+[KERNEL] RtlInitAnsiString Metin: 'XPP' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108e3
+[KERNEL] RtlInitAnsiString Metin: '.rdata' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108ea
+[KERNEL] RtlInitAnsiString Metin: '.data' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f0
+[KERNEL] RtlInitAnsiString Metin: 'langpo' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f7
+[KERNEL] RtlInitAnsiString Metin: 'langit' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108fe
+[KERNEL] RtlInitAnsiString Metin: 'langsp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10905
+[KERNEL] RtlInitAnsiString Metin: 'langfr' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1090c
+[KERNEL] RtlInitAnsiString Metin: 'langdu' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10913
+[KERNEL] RtlInitAnsiString Metin: 'langus' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1091a
+[KERNEL] RtlInitAnsiString Metin: 'langjp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10921
+[KERNEL] RtlInitAnsiString Metin: 'DOLBY' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10927
+[KERNEL] RtlInitAnsiString Metin: '$$XTIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeeec, Src: 0x1d2f64
+[KERNEL] RtlInitAnsiString Metin: '$$XSIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10898
+[KERNEL] RtlInitAnsiString Metin: '.text' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1089e
+[KERNEL] RtlInitAnsiString Metin: 'D3DX' (Uzunluk: 4)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a3
+[KERNEL] RtlInitAnsiString Metin: 'XGRPH' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108a9
+[KERNEL] RtlInitAnsiString Metin: 'DSOUND' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b0
+[KERNEL] RtlInitAnsiString Metin: 'WMADEC' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108b7
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD00' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c0
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_I' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108c9
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_B' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108d2
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_P' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108db
+[KERNEL] RtlInitAnsiString Metin: 'D3D' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108df
+[KERNEL] RtlInitAnsiString Metin: 'XPP' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108e3
+[KERNEL] RtlInitAnsiString Metin: '.rdata' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108ea
+[KERNEL] RtlInitAnsiString Metin: '.data' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f0
+[KERNEL] RtlInitAnsiString Metin: 'langpo' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108f7
+[KERNEL] RtlInitAnsiString Metin: 'langit' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x108fe
+[KERNEL] RtlInitAnsiString Metin: 'langsp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10905
+[KERNEL] RtlInitAnsiString Metin: 'langfr' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1090c
+[KERNEL] RtlInitAnsiString Metin: 'langdu' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10913
+[KERNEL] RtlInitAnsiString Metin: 'langus' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x1091a
+[KERNEL] RtlInitAnsiString Metin: 'langjp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10921
+[KERNEL] RtlInitAnsiString Metin: 'DOLBY' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10927
+[KERNEL] RtlInitAnsiString Metin: '$$XTIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeef4, Src: 0x10931
+[KERNEL] RtlInitAnsiString Metin: '$$XSIMAGE' (Uzunluk: 9)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff15c, Src: 0xb0fff020
+[KERNEL] RtlInitAnsiString Metin: '\Device\Harddisk0\partition1\UDATA\4947002c\TitleMeta.xbx' (Uzunluk: 57)
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\UDATA\4947002c\TitleMeta.xbx', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/UDATA/4947002c/TitleMeta.xbx'
+[KERNEL] NtCreateFile -> BASARILI! Handle: 0x1000f (FD: 15)
+[KERNEL] NtQueryInformationFile(Handle: 0x1000f, Class: 34, Length: 56) cagrildi.
+[KERNEL] NtClose(Handle: 0x1000f) cagrildi.
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeee8, Src: 0xb0fff020
+[KERNEL] RtlInitAnsiString Metin: '\Device\Harddisk0\partition1\UDATA\4947002c\TitleImage.xbx' (Uzunluk: 58)
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\UDATA\4947002c\TitleImage.xbx', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/UDATA/4947002c/TitleImage.xbx'
+[KERNEL] NtCreateFile -> BASARILI! Handle: 0x1000f (FD: 15)
+[KERNEL] NtQueryInformationFile(Handle: 0x1000f, Class: 34, Length: 56) cagrildi.
+[KERNEL] NtClose(Handle: 0x1000f) cagrildi.
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0ffeee8, Src: 0xb0fff020
+[KERNEL] RtlInitAnsiString Metin: '\Device\Harddisk0\partition1\UDATA\4947002c\SaveImage.xbx' (Uzunluk: 57)
+[KERNEL] NtCreateFile -> Xbox Yolu: '\Device\Harddisk0\partition1\UDATA\4947002c\SaveImage.xbx', Disposition: 0x3
+[KERNEL] NtCreateFile -> Linux Yolu: './hdd/E/UDATA/4947002c/SaveImage.xbx'
+[KERNEL] NtCreateFile -> BASARILI! Handle: 0x1000f (FD: 15)
+[KERNEL] NtQueryInformationFile(Handle: 0x1000f, Class: 34, Length: 56) cagrildi.
+[KERNEL] NtClose(Handle: 0x1000f) cagrildi.
+[KERNEL] NtClose(Handle: 0x1000e) cagrildi.
+[KERNEL] IoCreateSymbolicLink -> Link: '\??\U:' ===> Target: '\Device\Harddisk0\partition1\UDATA\4947002c'
+[Detaching after vfork from child process 38570]
+[KERNEL] ExQueryNonVolatileSetting(Index: 10, Length: 4) cagrildi.\n[KERNEL] RtlInitializeCriticalSection(CS: 0x8964e0) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x8964fc) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896518) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896534) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896550) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x89656c) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896588) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x8965a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x8965c0) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x8965dc) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x8965f8) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896614) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x896630) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x89664c) cagrildi.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0500000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0500000, MEM_COMMIT simule ediliyor.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1124) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1194) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1204) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1274) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c12e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1354) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c13c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1434) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c14a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1514) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1584) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c15f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1664) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c16d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1744) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c17b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1824) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1894) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1904) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1974) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c19e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1a54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1ac4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1b34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1ba4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1c14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1c84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1cf4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1d64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1dd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1e44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1eb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1f24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c1f94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2004) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2074) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c20e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2154) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c21c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2234) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c22a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2314) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2384) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c23f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2464) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c24d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2544) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c25b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2624) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2694) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2704) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2774) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c27e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2854) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c28c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2934) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c29a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2a14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2a84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2af4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2b64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2bd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2c44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2cb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2d24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2d94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2e04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2e74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2ee4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2f54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c2fc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3034) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c30a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3114) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3184) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c31f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3264) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c32d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3344) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c33b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3424) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3494) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3504) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3574) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c35e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3654) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c36c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3734) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c37a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3814) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3884) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c38f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3964) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c39d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3a44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3ab4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3b24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3b94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3c04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3c74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3ce4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3d54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3dc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3e34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3ea4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3f14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3f84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c3ff4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4064) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c40d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4144) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c41b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4224) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4294) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4304) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4374) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c43e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4454) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c44c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4534) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c45a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4614) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4684) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c46f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4764) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c47d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4844) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c48b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4924) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4994) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4a04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4a74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4ae4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4b54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4bc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4c34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4ca4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4d14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4d84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4df4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4e64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4ed4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4f44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c4fb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5024) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5094) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5104) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5174) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c51e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5254) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c52c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5334) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c53a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5414) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5484) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c54f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5564) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c55d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5644) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c56b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5724) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5794) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5804) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5874) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c58e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5954) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c59c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5a34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5aa4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5b14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5b84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5bf4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5c64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5cd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5d44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5db4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5e24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5e94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5f04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5f74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c5fe4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6054) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c60c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6134) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c61a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6214) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6284) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c62f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6364) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c63d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6444) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c64b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6524) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6594) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6604) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6674) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c66e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6754) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c67c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6834) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c68a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6914) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6984) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c69f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6a64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6ad4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6b44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6bb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6c24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6c94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6d04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6d74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6de4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6e54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6ec4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6f34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c6fa4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7014) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7084) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c70f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7164) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c71d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7244) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c72b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7324) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7394) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7404) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7474) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c74e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7554) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c75c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7634) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c76a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7714) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7784) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c77f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7864) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c78d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7944) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c79b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7a24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7a94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7b04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7b74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7be4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7c54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7cc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7d34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7da4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7e14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7e84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7ef4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7f64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c7fd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8044) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c80b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8124) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8194) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8204) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8274) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c82e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8354) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c83c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8434) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c84a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8514) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8584) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c85f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8664) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c86d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8744) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c87b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8824) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8894) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8904) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8974) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c89e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8a54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8ac4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8b34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8ba4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8c14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8c84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8cf4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8d64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8dd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8e44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8eb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8f24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c8f94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9004) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9074) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c90e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9154) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c91c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9234) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c92a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9314) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9384) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c93f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9464) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c94d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9544) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c95b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9624) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9694) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9704) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9774) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c97e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9854) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c98c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9934) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c99a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9a14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9a84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9af4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9b64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9bd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9c44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9cb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9d24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9d94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9e04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9e74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9ee4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9f54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3c9fc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca034) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca0a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca114) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca184) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca1f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca264) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca2d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca344) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca3b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca424) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca494) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca504) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca574) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca5e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca654) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca6c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca734) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca7a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca814) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca884) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca8f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca964) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ca9d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caa44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caab4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cab24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cab94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cac04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cac74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cace4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cad54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cadc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cae34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caea4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caf14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caf84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3caff4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb064) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb0d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb144) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb1b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb224) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb294) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb304) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb374) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb3e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb454) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb4c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb534) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb5a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb614) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb684) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb6f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb764) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb7d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb844) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb8b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb924) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cb994) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cba04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cba74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbae4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbb54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbbc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbc34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbca4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbd14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbd84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbdf4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbe64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbed4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbf44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cbfb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc024) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc094) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc104) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc174) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc1e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc254) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc2c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc334) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc3a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc414) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc484) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc4f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc564) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc5d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc644) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc6b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc724) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc794) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc804) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc874) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc8e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc954) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cc9c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cca34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccaa4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccb14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccb84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccbf4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccc64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cccd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccd44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccdb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cce24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cce94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccf04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccf74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ccfe4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd054) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd0c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd134) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd1a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd214) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd284) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd2f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd364) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd3d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd444) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd4b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd524) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd594) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd604) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd674) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd6e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd754) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd7c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd834) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd8a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd914) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd984) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cd9f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cda64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdad4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdb44) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdbb4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdc24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdc94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdd04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdd74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdde4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cde54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdec4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdf34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cdfa4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce014) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce084) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce0f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce164) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce1d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce244) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce2b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce324) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce394) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce404) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce474) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce4e4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce554) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce5c4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce634) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce6a4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce714) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce784) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce7f4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce864) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce8d4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce944) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ce9b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cea24) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cea94) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ceb04) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ceb74) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cebe4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cec54) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cecc4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ced34) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ceda4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cee14) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cee84) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3ceef4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cef64) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cefd4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cf044) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cf0b4) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cf8e8) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x3cf9b8) cagrildi.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0501000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0501000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0502000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0502000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0503000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0503000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0504000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0504000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0505000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0505000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0506000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0506000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0507000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0507000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0508000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0508000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0509000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0509000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050a000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050a000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050b000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050b000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050c000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050c000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050d000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050d000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050e000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050e000, MEM_COMMIT simule ediliyor.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x4142cc) cagrildi.
+[KERNEL] RtlInitializeCriticalSection(CS: 0x40fca0) cagrildi.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb050f000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb050f000, MEM_COMMIT simule ediliyor.
+[KERNEL] ExQueryNonVolatileSetting(Index: 260, Length: 4) cagrildi.\n[KERNEL] ExQueryNonVolatileSetting(Index: 7, Length: 4) cagrildi.\n[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff038, Src: 0x1d2214
+[KERNEL] RtlInitAnsiString Metin: 'langus' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x10898
+[KERNEL] RtlInitAnsiString Metin: '.text' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x1089e
+[KERNEL] RtlInitAnsiString Metin: 'D3DX' (Uzunluk: 4)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108a3
+[KERNEL] RtlInitAnsiString Metin: 'XGRPH' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108a9
+[KERNEL] RtlInitAnsiString Metin: 'DSOUND' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108b0
+[KERNEL] RtlInitAnsiString Metin: 'WMADEC' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108b7
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD00' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108c0
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_I' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108c9
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_B' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108d2
+[KERNEL] RtlInitAnsiString Metin: 'PSGSFD_P' (Uzunluk: 8)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108db
+[KERNEL] RtlInitAnsiString Metin: 'D3D' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108df
+[KERNEL] RtlInitAnsiString Metin: 'XPP' (Uzunluk: 3)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108e3
+[KERNEL] RtlInitAnsiString Metin: '.rdata' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108ea
+[KERNEL] RtlInitAnsiString Metin: '.data' (Uzunluk: 5)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108f0
+[KERNEL] RtlInitAnsiString Metin: 'langpo' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108f7
+[KERNEL] RtlInitAnsiString Metin: 'langit' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x108fe
+[KERNEL] RtlInitAnsiString Metin: 'langsp' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x10905
+[KERNEL] RtlInitAnsiString Metin: 'langfr' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x1090c
+[KERNEL] RtlInitAnsiString Metin: 'langdu' (Uzunluk: 6)
+[KERNEL] RtlInitAnsiString cagrildi -> Dest: 0xb0fff040, Src: 0x10913
+[KERNEL] RtlInitAnsiString Metin: 'langus' (Uzunluk: 6)
+[KERNEL] XeLoadSection -> Bolum: 'langus' (VA: 0x0037B000, Boyut: 0x1AAB8, Ref: 0)
+[KERNEL] ExQueryNonVolatileSetting(Index: 8, Length: 4) cagrildi.\n[KERNEL] ExQueryNonVolatileSetting(Index: 259, Length: 4) cagrildi.\n[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 1228800 (0x12C000), Align: 0x4000, Protect: 0x404 => Ptr: 0xb03d0000
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 1228800 (0x12C000), Align: 0x4000, Protect: 0x404 => Ptr: 0xb02a0000
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 1228800 (0x12C000), Align: 0x4000, Protect: 0x404 => Ptr: 0xb016c000
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 1851392 (0x1C4000), Align: 0x4000, Protect: 0x404 => Ptr: 0xaffa4000
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 1851392 (0x1C4000), Align: 0x4000, Protect: 0x404 => Ptr: 0xafddc000
+[KERNEL] NtOpenFile('\Device\Harddisk0\partition0' -> '/Device/Harddisk0/partition0', DesiredAccess: 0xC0100000) cagrildi.
+[KERNEL] NtReadFile -> Handle: 0x8899aabb, Length: 512
+[KERNEL] NtReadFile -> Gecersiz handle!
+[KERNEL] NtClose(Handle: 0x8899aabb) cagrildi.
+[KERNEL] RtlNtStatusToDosError(Status: 0xC0000008) cagrildi.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0510000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0510000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0511000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0511000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0512000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0512000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0513000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0513000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0514000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0514000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0515000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0515000, MEM_COMMIT simule ediliyor.
+[KERNEL] NtAllocateVirtualMemory(Ordinal 184) cagrildi -> Base: 0xb0516000, Boyut: 4096 bayt, AllocType: 0x1000
+[KERNEL] NtAllocateVirtualMemory -> Ozel adres istendi: 0xb0516000, MEM_COMMIT simule ediliyor.
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 96 (0x60), Align: 0x0, Protect: 0x4 => Ptr: 0xb0674000
+[KERNEL] MmAllocateContiguousMemoryEx -> Boyut: 2097152 (0x200000), Align: 0x0, Protect: 0x404 => Ptr: 0xafbd8000
+[KERNEL] KeInitializeDpc(Dpc: 0x1ae464, Routine: 0x1a4a30, Context: 0x1ae3e0) cagrildi.
+[KERNEL] HalGetInterruptVector -> IRQ: 3 => Vector: 0x33, Irql: 24
+[KERNEL] KeInitializeInterrupt(Interrupt: 0x1ae3f4, Routine: 0x1a4910, Vector: 0x33) cagrildi.
+[KERNEL] KeConnectInterrupt(Interrupt: 0x1ae3f4) cagrildi.
+[KERNEL] HalRegisterShutdownNotification -> RegPtr: 0x1ae544, State: 1
+[KERNEL] MmClaimGpuInstanceMemory -> Boyut: 20480 bayt, AllocType: 0xb0ffeee4 => Donen Ptr: 0xb0676000
+
+Thread 9 "xbe-inspect" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0xb0fffb40 (LWP 38565)]
+0x001a3fc5 in ?? ()
+(gdb)    0x1a3fb0:	decl   -0xc(%ebp)
+   0x1a3fb3:	jne    0x1a3f8b
+   0x1a3fb5:	mov    0x1b6d58,%esi
+   0x1a3fbb:	push   $0x0
+   0x1a3fbd:	mov    $0x80c0,%dx
+   0x1a3fc1:	mov    %bl,%al
+   0x1a3fc3:	push   $0x4
+=> 0x1a3fc5:	out    %al,(%dx)
+   0x1a3fc6:	lea    -0x8(%ebp),%eax
+   0x1a3fc9:	push   %eax
+   0x1a3fca:	push   $0x4c
+   0x1a3fcc:	push   $0x0
+   0x1a3fce:	push   %ebx
+   0x1a3fcf:	call   *%esi
+   0x1a3fd1:	orb    $0x1f,-0x5(%ebp)
+(gdb) eax            0x101               257
+ecx            0x1aeabb            1764027
+edx            0x80c0              32960
+ebx            0x1                 1
+esp            0xb0ffeef8          0xb0ffeef8
+ebp            0xb0ffef1c          0xb0ffef1c
+esi            0x56560faf          1448480687
+edi            0x1ae3e0            1762272
+eip            0x1a3fc5            0x1a3fc5
+eflags         0x10246             [ PF ZF IF RF ]
+cs             0x23                35
+ss             0x2b                43
+ds             0x2b                43
+es             0x2b                43
+fs             0x73                115
+gs             0x63                99
+(gdb) Invalid character '\' in expression.
+(gdb) 

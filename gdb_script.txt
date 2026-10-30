@@ -1,0 +1,7 @@
+set confirm off
+handle SIGSEGV nostop noprint pass
+run
+shell sleep 3
+interrupt
+x/10i 0x1a1c40
+quit

@@ -1,0 +1,12 @@
+Reading symbols from ./xbe-inspect/build/xbe-inspect...
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+(No debugging symbols found in ./xbe-inspect/build/xbe-inspect)
+(gdb) (gdb) (gdb) Starting program: /home/hakan/Desktop/xxcl-bin/xbe-inspect/build/xbe-inspect /home/hakan/Desktop/Sega\ GT\ 2002\ \(Europe\)\ \(En,Ja,Fr,De,Es,It\)/default.xbe --run
+(gdb) Undefined command: "sleep".  Try "help".
+(gdb)    0x815b0:	Cannot access memory at address 0x815b0
+(gdb) 
