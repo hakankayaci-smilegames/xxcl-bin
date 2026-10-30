@@ -249,6 +249,58 @@ int main() {
         compare_core.register_word(4) != 0x00ffffff ||
         compare_core.register_word(12) != 0) return 37;
 
+    // JCLR/JSET read DSP X/Y data memory and branch to the extension word.
+    words[0] = 0x0044f400; // MOVE #3,X0
+    words[1] = 3;
+    words[2] = 0x00440400; // MOVE X0,X:$04
+    words[3] = 0x000a0480; // JCLR #0,X:$04,P:$0008
+    words[4] = 8;
+    if (!compare_core.bootstrap(table_physical, 1) ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 38;
+    const uint32_t status_before_bit_jump = compare_core.register_word(57);
+    if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.program_counter() != 5 || compare_core.data_word(false, 4) != 3 ||
+        compare_core.register_word(57) != status_before_bit_jump) return 38;
+
+    words[1] = 2; // Bit 0 clear: jump to P:$0008.
+    if (!compare_core.bootstrap(table_physical, 1)) return 39;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 39;
+    }
+    if (compare_core.program_counter() != 8) return 39;
+
+    words[3] = 0x000a04a1; // JSET #1,X:$04,P:$0008
+    if (!compare_core.bootstrap(table_physical, 1)) return 40;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 40;
+    }
+    if (compare_core.program_counter() != 8) return 40;
+
+    words[2] = 0x004c0400; // MOVE X0,Y:$04; X:$04 retains 2.
+    words[1] = 3;
+    words[3] = 0x000a04c0; // JCLR #0,Y:$04,P:$0008
+    if (!compare_core.bootstrap(table_physical, 1)) return 41;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 41;
+    }
+    if (compare_core.program_counter() != 5 || compare_core.data_word(true, 4) != 3) return 41;
+
+    words[2] = 0x00440400;
+    words[3] = 0x000a0494; // JCLR #20,X:$04,P:$0008
+    if (!compare_core.bootstrap(table_physical, 1)) return 42;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 42;
+    }
+    if (compare_core.program_counter() != 8) return 42;
+
+    words[3] = 0x000a0498; // Bit 24 is outside a 24-bit DSP word.
+    if (!compare_core.bootstrap(table_physical, 1) ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.step() != xbe::kernel::ApuDspCore::StepResult::unsupported_instruction ||
+        compare_core.program_counter() != 3) return 43;
+
     // BEQ consumes its long relative displacement and leaves the condition
     // register unchanged whether the branch is taken or not.
     words[0] = 0x00200013; // CLR A -> Z=1

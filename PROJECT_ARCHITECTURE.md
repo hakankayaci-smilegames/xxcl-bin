@@ -52,7 +52,9 @@ The loader maps XBE sections, resolves imports, initializes the Xbox KPCR, and i
 
 ## Current integration checkpoint
 
-The GP DSP `CMP X0,A` now compares the actual 24-bit X0 value, sign-extended to 56 bits, rather than only its sign. On an isolated run this moves the DSP past its old `PC=0x064` branch to the currently unsupported instruction at `PC=0x066`, `P=0x0A0480`. The guest-side audio wait has not yet been shown to complete.
+The GP DSP now supports direct X/Y data-memory JCLR/JSET jumps, including the observed `0x0A0480` instruction. An isolated runtime proceeds to unsupported `PC=0x070`, `P=0x05F420`; guest audio-wait completion and rendering are still unproven.
+
+The GP DSP `CMP X0,A` now compares the actual 24-bit X0 value, sign-extended to 56 bits, rather than only its sign. On an isolated run this moved the DSP past its old `PC=0x064` branch to `PC=0x066`, `P=0x0A0480`; the later checkpoint above supersedes that intermediate stop. The guest-side audio wait has not yet been shown to complete.
 
 GP DSP scratch-table address and maximum-index writes are propagated to the running DSP rather than frozen at bootstrap. If an active DMA cannot yet resolve its scratch memory, the DSP retries the descriptor on a later execution batch and reports EOL only after completion; STOP, ABORT, and bootstrap cancel pending work. On an isolated Sega GT launch this lets the previously rejected scratch DMA at offset `0xB000` complete even without tracing; debugger inspection still finds the guest waiting at `0x00162E2A`, so the guest-side completion path needs further investigation.
 

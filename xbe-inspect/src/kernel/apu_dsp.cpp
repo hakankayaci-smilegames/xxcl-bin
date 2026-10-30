@@ -362,6 +362,26 @@ ApuDspCore::StepResult ApuDspCore::step() {
         return StepResult::executed;
     }
 
+    // JCLR/JSET #n,X/Y:$aa,P:xxxx reads the first 64 data-memory words.
+    constexpr uint32_t direct_jump_mask = 0x00FFC0A0;
+    constexpr uint32_t jclr_direct_value = 0x000A0080;
+    constexpr uint32_t jset_direct_value = 0x000A00A0;
+    const uint32_t direct_jump = instruction & direct_jump_mask;
+    if (direct_jump == jclr_direct_value || direct_jump == jset_direct_value) {
+        const uint32_t bit = instruction & 0x1F;
+        if (bit >= 24 || program_counter_ + 1 >= program_word_count) {
+            return StepResult::unsupported_instruction;
+        }
+        const bool y_space = (instruction & (1u << 6)) != 0;
+        const uint32_t address = (instruction >> 8) & 0x3F;
+        const uint32_t value = (y_space ? y_memory_ : x_memory_)[address];
+        const bool is_set = (value & (1u << bit)) != 0;
+        const bool branch = direct_jump == jset_direct_value ? is_set : !is_set;
+        const uint32_t target = program_[program_counter_ + 1] & 0x0FFF;
+        advance_program_counter(branch ? target : program_counter_ + 2);
+        return StepResult::executed;
+    }
+
     // JCLR/JSET #n,X/Y:$pp,P:xxxx polls an on-chip peripheral bit and uses
     // an absolute P-space target when the condition is satisfied.
     constexpr uint32_t peripheral_jump_mask = 0x00FFC0B0;
