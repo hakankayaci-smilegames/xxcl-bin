@@ -404,6 +404,17 @@ ApuDspCore::StepResult ApuDspCore::step() {
         return StepResult::executed;
     }
 
+    // MOVEC #xxxxxx,M0-M7: the immediate word is narrowed to 16 bits.
+    constexpr uint32_t movec_modifier_mask = 0x00FFFFB8;
+    if ((instruction & movec_modifier_mask) == 0x0005F420) {
+        if (program_counter_ + 1 >= program_word_count) {
+            return StepResult::unsupported_instruction;
+        }
+        registers_[32 + (instruction & 7)] = program_[program_counter_ + 1] & 0xFFFF;
+        advance_program_counter(program_counter_ + 2);
+        return StepResult::executed;
+    }
+
     // MOVEP X/Y:$pp <-> DSP register. The observed GP firmware uses this form
     // to program DMA start/next-block registers from its internal state.
     constexpr uint32_t movep_register_mask = 0x00FE40C0;

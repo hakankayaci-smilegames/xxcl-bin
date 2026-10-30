@@ -46,22 +46,56 @@ xbe-inspect/
 
 ## Execution and memory model
 
-The loader maps XBE sections, resolves imports, initializes the Xbox KPCR, and invokes the entry point. The physical-memory service assigns bounded Xbox physical ranges to host allocations and resolves addresses in both directions. MMIO traps mapped writes and completes synchronous command acknowledgements before the guest resumes. APU writes are queued from the trap handler and consumed by the APU worker. The APU backend owns register defaults; its empty VP PIO queue reports 0x80 free slots. VP input/output SGE methods update guest physical mappings; the shared SGE transfer primitive validates descriptors before copying across pages. GP bootstrap loads 0x800 little-endian 24-bit program words into `ApuDspCore`, which owns DSP program/data/register state and its currently supported instructions. Atomic debug snapshots expose the DSP PC, nearby program words, instruction count, and worker state to the host overlay. MOVEP accesses to A/B use their accumulator-part aliases. `ApuDspDma` owns DMA register actions, descriptor walking, buffer callbacks, and EOL status separately. The observed format-6 scratch transfer now uses the shared SGE path; FIFO backends and broader DMA format coverage remain future work. The worker delivers start-frame interrupts at an approximate 667-microsecond cadence with a bounded instruction budget; it is not cycle-accurate. Short-relative BSR, accumulator aliases, descriptor transfer, PM5 direct X/Y moves, PM2 `CMP X0,A`, and long-relative `BEQ` have contract coverage. The latest isolated runtime passes the former `PC=0x064`, instruction `0x0D104A`, checkpoint. The DSP56300 NOP, unsigned `CMPU X0,A` (`0x0C1FF8`), and short `BCC` condition handling have contract coverage. The former short-JMP decode of `0x0C1FF8` was incorrect and has been removed. `BCC` evaluates the condition-code table and applies signed 9-bit displacement relative to current PC. PM2 `SUB X0,A` now stores its 56-bit result and updates arithmetic flags. The latest isolated run reaches the recurring DMA EOL poll at `PC=0x121` (`BRCLR #7,X:$C5`); tracing confirmed the DMA EOL flag is set and cleared. The worker then polls there repeatedly. NV2A worker reports the `NV_PFB_WBC` register (`0xFD100410`) as no pending flush because no writeback cache is modeled; PFIFO DMA GET/PUT/STATUS are still observed without parsing or executing commands. DSP voice processing, EP execution, broader GP instruction and DMA coverage, and graphics command completion remain future work. Optional APU tracing is disabled unless `XXCL_TRACE_APU=1` is set.
+The loader maps XBE sections, resolves kernel imports, initializes the Xbox KPCR,
+and invokes the guest entry point. The physical-memory service tracks bounded
+Xbox physical ranges and host allocations in both directions. Contiguous
+allocations used by the guest's DMA addressing are reserved inside a bounded
+address window; the NV2A worker resolves command addresses through registered
+allocations or the mapped physical-memory mirror.
 
-`video/window.cpp` renders a compact SDL debug overlay at the host event-loop cadence. It reports host FPS/frametime, the atomic APU DSP debug snapshot, and NV2A PFIFO DMA GET/PUT/STATUS values plus worker state. The host FPS is not a guest render rate. The overlay is currently drawn over a cleared host surface; it does not consume or display Xbox graphics. PFIFO DMA GET/PUT are read from `0xFD003244/0xFD003240`, and STATUS from `0xFD003214`; the worker observes pending updates without changing hardware pointers. Earlier diagnostics read the USER block at `0xFD800040/44` as if it were DMA pointers and are invalid.
+MMIO write faults acknowledge synchronous device commands and queue APU writes.
+The APU worker owns GP state, delivers approximate frame events every 667
+microseconds, and executes a bounded 27,000-instruction DSP batch. This is
+bring-up scheduling, not cycle-accurate timing.
+
+GP bootstrap loads 0x800 little-endian 24-bit program words from scratch memory.
+The running DSP receives live scratch-table address and limit changes. Pending
+DMA is retried on a later batch using the same range validation; EOL is asserted
+only after real completion. STOP, ABORT, and bootstrap cancel pending work.
+`ApuDspDma` owns descriptors, format handling and circular-offset writeback;
+`ApuDspCore` owns instruction execution, registers, flags and interrupts.
+Unknown instructions stop execution and remain visible in diagnostic snapshots.
+
+NV2A shares active USER and PFIFO DMA GET/PUT state and executes validated DMA
+JUMP control words. Method packets can be decoded independently, but the worker
+does not yet execute graphics methods or publish guest pixels. GET is not forced
+to PUT to bypass a guest wait.
+
+`video/window.cpp` owns SDL rendering and the diagnostic overlay. The overlay
+reports host-loop timing, DSP snapshots and FIFO registers. Host FPS is not a
+guest render rate. Optional APU tracing is enabled with `XXCL_TRACE_APU=1`.
 
 ## Current integration checkpoint
 
-The GP DSP now supports direct X/Y data-memory JCLR/JSET jumps, including the observed `0x0A0480` instruction. An isolated runtime proceeds to unsupported `PC=0x070`, `P=0x05F420`; guest audio-wait completion and rendering are still unproven.
+Verified on 30 October 2026:
 
-The GP DSP `CMP X0,A` now compares the actual 24-bit X0 value, sign-extended to 56 bits, rather than only its sign. On an isolated run this moved the DSP past its old `PC=0x064` branch to `PC=0x066`, `P=0x0A0480`; the later checkpoint above supersedes that intermediate stop. The guest-side audio wait has not yet been shown to complete.
+- A fresh isolated HDD launch requests firmware reboot; the second launch uses
+  the same root and starts the guest's GPU/DSP initialization.
+- NV2A processes the real DMA JUMP to `0x0470D000`. Earlier GDB evidence confirms
+  the guest passes its GET/PUT wait and reaches `0x001A3255`.
+- Live scratch mapping, pending-DMA retry, the signed `CMP X0,A` fix, direct-memory
+  JCLR/JSET, and immediate MOVEC to M0–M7 now have contract coverage.
+- The latest clean run passes DSP `PC=0x070` and stops at unsupported
+  `PC=0x072`, instruction `0x0461A0`; following words are `0x0462A0/0x0463A0`.
+  A diagnostic trace confirms the unsupported-instruction result.
+- The latest build and all eight CTest targets pass. The command `./xxcl`
+  launches the rebuilt `xbe-inspect/build/xbe-inspect` target.
+- Completion of the guest's audio wait is not yet proven, and no game image has
+  been rendered. The next instruction is recorded for the next development task.
 
-GP DSP scratch-table address and maximum-index writes are propagated to the running DSP rather than frozen at bootstrap. If an active DMA cannot yet resolve its scratch memory, the DSP retries the descriptor on a later execution batch and reports EOL only after completion; STOP, ABORT, and bootstrap cancel pending work. On an isolated Sega GT launch this lets the previously rejected scratch DMA at offset `0xB000` complete even without tracing; debugger inspection still finds the guest waiting at `0x00162E2A`, so the guest-side completion path needs further investigation.
+Historical intermediate checkpoints are recorded in Git and `STATUS.md`.
+`SESSION_HANDOFF.md` contains the current resume instructions and run commands.
 
-On a fresh isolated HDD root, the first launch requests a firmware reboot. On the second launch, the worker selects the live DMA object at RAMIN offset `0x11C0`. Since this DMA object limits addresses to `0x07FFAFFF`, `MmAllocateContiguousMemoryEx` now reserves allocations from a bounded guest DMA address window instead of returning arbitrary host addresses. The guest writes a DMA JUMP at physical address zero; the worker maps its target to the registered allocation, checks the object limit, advances PFIFO GET, and mirrors the result through USER GET. Two clean runtimes produced target `0x0470D000` with PFIFO GET and PUT equal. A GDB watchpoint then confirmed the guest wrote `0xDEADBEEF` to `0x80000000` and advanced to `EIP=0x001A3255`, proving the old GET/PUT wait completed. The following pushbuffer contents have not been consumed, method commands are not executed, and no game drawing is proven. Next, trace the next guest wait or GPU submission; never force GET to PUT.
-
-The next paragraph records earlier bring-up steps; its NV2A portion is historical and superseded by the current checkpoint above.
-
-The generic VFS, file-I/O, MMIO, APU, physical-memory, DSP and DMA contract checks pass (8 CTest targets, before the latest NV2A change). On isolated roots, Sega GT creates title data and requests reboot on its first launch. MMIO acknowledgement moves execution past the former null dereference at `0x0015F8DB`; the APU PIO queue lets the guest pass its `0x00168874` free-space poll; VP SGE methods populate guest physical mappings. GP firmware bootstraps and passes its frame interrupt poll. DMA walks the observed terminal descriptor, transfers six 24-bit samples from SGE scratch, sets EOL, and gets past DSP `PC=0x121`. PM5 direct X/Y MOVE advances past `PC=0x060`; PM2 `CMP X0,A` advances past `PC=0x063`; long-relative `BEQ` passes the former `PC=0x064` checkpoint. The former `PC=0x171`, instruction `0x000000`, is a one-word NOP. `0x0C1FF8` is `CMPU X0,A`, not a short JMP. After implementing it and short conditional `BCC`, the isolated run reaches `PC=0x121`, where GP firmware polls DMA EOL. `SUB X0,A` is now implemented and covered. The worker remains in that wait loop after EOL is cleared. GDB later found the game waiting at `0x001A1C40` for the `NV_PFB_WBC` writeback-flush status (`0xFD100410`); a general immediate-completion model is now implemented, but integration after that change remains unverified. PFIFO DMA GET/PUT/STATUS are sampled without parsing commands; a fresh isolated runtime is needed to determine whether guest submissions appear. The host overlay shows host-loop FPS/frametime, DSP progress, and current PFIFO registers. First actual game drawing still needs a guest pushbuffer parser and host graphics backend.
-
-The architecture goal is reusable Xbox compatibility behavior across titles. Title-specific device responses belong in device backends only where a device protocol requires them, not in generic VFS or file-handle code.
+The architecture goal is reusable Xbox compatibility across titles. Keep
+device protocol behavior in device backends and preserve kernel export calling
+conventions; do not introduce title-specific branches into generic services.

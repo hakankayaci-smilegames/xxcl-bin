@@ -6,7 +6,7 @@ XXCL, orijinal Xbox yürütülebilir dosyalarını (XBE) doğrudan Linux üzerin
 
 XBE yükleme, kernel uyumluluğu ve APU/DSP firmware başlatma üzerinde çalışılıyor. Temiz geçici HDD kökündeki ilk açılış reboot ister; aynı kökle yapılan ikinci açılış NV2A kuyruğunu başlatır. Xbox bitişik bellek tahsisleri artık GPU'nun kabul ettiği adres aralığından veriliyor. Worker, DMA JUMP komutunu okuyup `0x0470D000` adresine geçti; oyun GET/PUT beklemesini aşıp `0x80000000` konumuna `0xDEADBEEF` yazdı ve `0x001A3255` adresindeki sonraki koda ilerledi. Yöntem komutları, temizleme veya oyun görüntüsü henüz işlenmiyor.
 
-Ses işlemcisi, oyun çalışırken değişen bellek tablosunu artık kullanıyor ve bellek henüz hazır değilse bekleyen DMA aktarımını sonraki çalışma turunda yeniden deniyor. Karşılaştırma ve bellek biti kontrolü komutlarındaki eksikler giderildi; gerçek oyun koşusunda ses işlemcisi yeni bir komuta (`PC=0x070`) ulaştı. Oyun tarafındaki ses beklemesinin geçtiği henüz doğrulanmadı; görüntüye ulaşmak için ek iş gerekiyor.
+Ses işlemcisi, oyun çalışırken değişen bellek tablosunu artık kullanıyor ve bellek henüz hazır değilse bekleyen DMA aktarımını sonraki çalışma turunda yeniden deniyor. Karşılaştırma, bellek biti kontrolü ve immediate `MOVEC` desteğiyle gerçek oyun koşusu `PC=0x072` noktasındaki sonraki eksik komuta ulaştı. Oyun tarafındaki ses beklemesinin geçtiği henüz doğrulanmadı; oyun görüntüsü henüz oluşmadı. Son derleme ve 8 sözleşme testi başarılı.
 
 SDL penceresindeki tanılama paneli host döngüsünün FPS ve frametime değerlerini, DSP worker durumunu/PC'sini/işlenen instruction sayısını ve PFIFO DMA GET/PUT/STATUS değerlerini gösterir. Host FPS, oyunun render FPS'i değildir. Worker, NV2A'nın `0xFD100410` yazı belleği aktarım kaydını “bekleyen aktarım yok” durumunda tutar; burada gerçek bir yazı belleği önbelleği modellenmiyor. Etkin DMA kanalında worker USER DMA GET/PUT ile PFIFO Cache1 DMA GET/PUT (`0xFD800044/40`, `0xFD003244/240`) değerlerini eşliyor. Desteklenen atlama işlendiğinde GET, çözülen hedefe gider; bozuk, sınır dışı veya desteklenmeyen kontrol komutlarında GET ilerlemez. `GPU PENDING` sayacı komutların işlendiğini göstermez. Oyun grafikleri henüz çizilmiyor.
 
@@ -17,6 +17,13 @@ Pushbuffer yöntem paketi ve RAMIN’deki DMA nesnesi sınır kontrolüyle okuna
 Worker, seçili DMA instance numarasını RAMIN’deki nesneye çevirip ham `flags/limit/frame` alanlarını terminale raporluyor. Canlı Sega GT izinde instance offset’i `0x11C0`; bu yalnız teşhis verisidir, koda oyun adresi olarak sabitlenmemiştir.
 
 ## Çalıştırma
+
+Güncel kaynakla terminaldeki `xxcl` komutunu kullanmadan önce wrapper'ın çalıştırdığı hedefi derle:
+
+```bash
+cmake -S xbe-inspect -B xbe-inspect/build
+cmake --build xbe-inspect/build -j"$(nproc)"
+```
 
 İlk açılışın istediği yeniden başlatmayı karşılamak için iki çalıştırmada da aynı geçici HDD kökünü kullan:
 
@@ -100,13 +107,13 @@ flowchart TD
 - **APU ve APIC MMIO Eşlemeleri (`hal.cpp`)**: 
   - `0xFE800000` (APU) ve `0xFEC00000` (APIC) aralıklarındaki register erişimlerinden kaynaklı çökmeler çözüldü. Bu alanlar allocate edilerek null-pointer/segfault okumaları güvenli hale getirildi.
 - **Linux Heap Çökmelerinin Giderilmesi (Memory Tracking)**: 
-  - `ExAllocatePool` üzerinden alınan bellekleri oyun sınır dışına (out-of-bounds) taşırarak Linux glibc heap yapısını bozuyordu (malloc/free assertion failure). Tüm tahsislere `4096 bayt` padding eklendi ve gerçek boyutları `unordered_map` ile takip edilerek (`MmQueryAllocationSize` vb.) glibc'nin çökmesi %100 engellendi.
+  - Gözlenen havuz tahsislerinde boyut takibi ve ek alan kullanılarak önceki glibc heap bozulmaları giderildi. Bu, genel bellek güvenliğinin veya tüm oyunların doğrulandığı anlamına gelmez.
 - **NV2A tanılama worker'ı (`nv2a.cpp`)**:
-  - Worker, gerçek PFIFO DMA GET/PUT ve STATUS kayıtlarını izler. Daha önceki `0xFD100410` busy-bit temizleme ve `0xFD800040/44` GET/PUT okumaları yanlış adreslere gidiyordu; bunlar kaldırıldı. FIFO komut yürütmesi henüz uygulanmadı.
+  - Worker, PFIFO DMA GET/PUT ve STATUS kayıtlarını izler; etkin USER kayıt görünümünü eşler ve doğrulanmış DMA JUMP komutlarını işler. Grafik yöntemlerinin yürütülmesi henüz uygulanmadı.
 - **Host tanılama overlay'i (`video/window.cpp`)**:
   - Host FPS/frametime ile APU DSP ve NV2A FIFO sayaçlarını gösterir. Bu değerler emülatör döngüsünü izler; Xbox oyununun gerçek çizim hızı olarak yorumlanmamalıdır.
-- **Fiziksel Adres Maskelemesi**:
-  - `MmGetPhysicalAddress`, sanal adresleri doğrudan değil, `0x03FFFFFF` (64MB) maskesinden geçirerek Xbox fiziksel bellek uzayına (%100 uygun) döndürmeye başladı.
+- **Fiziksel Adres Eşleme**:
+  - `MmGetPhysicalAddress`, kayıtlı host tahsislerini sınırlandırılmış Xbox fiziksel aralıklarına çevirir; bilinmeyen sayfalar için kararlı eşleme oluşturur. APU aktarımında aynı eşlemenin ters yönü kullanılır.
 - **EEPROM Parametrelerinin Mocklanması (`ex.cpp`)**:
   - `ExQueryNonVolatileSetting` (Ordinal 24) sıfır döndüğü için DSound başlatılamıyordu. Fonksiyon düzenlenerek *Language*, *Video*, *Audio*, *Game Region*, *AV Region* gibi Xbox EEPROM anahtarlarına doğru `DWORD` değerleri (örneğin Audio=0, Region=4 (Europe)) dönmesi sağlandı.
 - **I/O Port Simülasyonu (SIGSEGV)**:
@@ -117,7 +124,7 @@ flowchart TD
 ## 🚧 Yapılacaklar (To-Do / Roadmap)
 
 1. **NV2A komut kuyruğu ve ilk çizim**:
-   - `NV_USER_DMA_GET/PUT` kayıtlarını PFIFO DMA kayıtlarına bağla, DMA nesnesi ile komut belleğini takip et ve komutları gerçekten tüket. GET değerini yalnız beklemeyi atlatmak için PUT'a eşitleme.
+   - USER/PFIFO eşlemesi ve DMA JUMP desteği hazır. Sırada kalan DSP engellerini geçip guest'in grafik yöntemlerini gerçekten işlemek var. GET yalnız işlenmiş komut nedeniyle ilerlemeli.
 2. **D3D ve NV2A gerçek çizimi**:
    - FIFO GET/PUT eşitlemesi pushbuffer yürütmesi değildir. İlk çizim hedefi, guest'in NV2A pushbuffer'ından genel bir clear komutunu okuyup host penceresine yansıtmaktır; ardından temel state, vertex ve texture yolları eklenmelidir.
 3. **Gamepad / Input entegrasyonu**:
@@ -134,5 +141,5 @@ flowchart TD
 
 ## ⚖️ Kurallar ve İlkeler
 1. **Genel Uyumluluk (Sıfır Oyun Özel Hack):** Yapılan hiçbir yama veya kod parçası sadece *Sega GT 2002* için özel tasarlanamaz. Fonksiyonlar tüm Xbox oyunlarının genel uyumluluğunu sağlayacak şekilde Kernel standartlarına göre yazılmalıdır.
-2. **Hands Off Git:** Bu proje geliştirilirken yapay zeka ajanları tarafından Git sıfırlama, dal değiştirme komutları (`git checkout`, `git reset` vb.) kesinlikle çalıştırılmaz. Versiyon kontrolü tamamen kullanıcıya aittir.
+2. **Git ve geri dönüş noktaları:** Kullanıcının verdiği yetkiyle doğrulanmış değişiklikler commit edilip pushlanır. Kullanıcı değişikliklerini silen sıfırlama veya dal değiştirme işlemleri açık talep olmadan yapılmaz.
 3. **Çift Dilli Destek:** Proje en başından itibaren Türkçe ve İngilizce dil mantığına uygun bir temel ile geliştirilmektedir.

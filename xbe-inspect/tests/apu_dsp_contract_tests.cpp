@@ -301,6 +301,20 @@ int main() {
         compare_core.step() != xbe::kernel::ApuDspCore::StepResult::unsupported_instruction ||
         compare_core.program_counter() != 3) return 43;
 
+    // MOVEC #xxxxxx,Mn loads a 16-bit modifier and leaves CCR unchanged.
+    words[0] = 0x0005f420; // MOVEC #$123456,M0
+    words[1] = 0x00123456;
+    words[2] = 0x0005f427; // MOVEC #$FFFFFE,M7
+    words[3] = 0x00fffffe;
+    if (!compare_core.bootstrap(table_physical, 1)) return 44;
+    const uint32_t status_before_movec = compare_core.register_word(57);
+    if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.program_counter() != 2 || compare_core.register_word(32) != 0x3456 ||
+        compare_core.register_word(57) != status_before_movec) return 44;
+    if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed ||
+        compare_core.program_counter() != 4 || compare_core.register_word(39) != 0xfffe ||
+        compare_core.register_word(57) != status_before_movec) return 45;
+
     // BEQ consumes its long relative displacement and leaves the condition
     // register unchanged whether the branch is taken or not.
     words[0] = 0x00200013; // CLR A -> Z=1
