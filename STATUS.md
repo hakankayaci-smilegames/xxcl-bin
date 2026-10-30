@@ -2,6 +2,7 @@
 
 ## Current checkpoint
 
+- 30 Ekim 2026: DSP `CMP X0,A` karşılaştırması, pozitif X0 değerinin kendisini çıkarma işleminde kullanmıyordu; bu nedenle `X0=3`, `A=0` iken yanlışlıkla eşitlik sonucu üretiliyordu. Genel 56 bit karşılaştırma düzeltildi ve pozitif/eşit/negatif durumlar test edildi. Temiz oyun koşusunda DSP eski `PC=0x064` dalını aşıp henüz desteklenmeyen `PC=0x066`, `P=0x0A0480` komutuna ulaştı. Oyun tarafındaki ses beklemesinin geçtiği henüz doğrulanmadı; ilk görüntü yok.
 - 30 Ekim 2026: Ayrıntılı iz kapalıyken DSP, scratch sınırı güncellenmeden DMA başlatabiliyordu. İlk başarısız denemeden sonra aktarım yeniden denenmediği için yeni sınır da tek başına yeterli değildi. Etkin DMA artık sonraki DSP çalışma turunda gerçek bellek doğrulamasıyla yeniden deneniyor; durdurulan, iptal edilen veya bootstrap ile sıfırlanan işlem yeniden başlatılmıyor. İzole koşuda GDB `next=0x401E`, `EOL=1` ve bekleyen DMA yok durumunu gördü; DSP önceki sürekli `PC=0x121` beklemesinden çıktı. Oyun thread'i yine `0x00162E2A` ses beklemesinde kaldı; ilk görüntü henüz yok.
 - 30 Ekim 2026: GP DSP, scratch tablosunun adresini ve en yüksek SGE indeksini yalnızca bootstrap sırasında saklıyordu. Oyun limiti `8`'den `0x7D`'ye çıkarsa bile DSP eski sınırda kalıyordu; `0xB000` scratch ofsetli üçüncü DMA aktarımı reddedilip DSP `PC=0x121` döngüsünde bekliyordu. Canlı register güncellemeleri artık DSP'ye iletiliyor; temiz HDD koşusunda söz konusu üçüncü aktarım (`next=0x00401E`) tamamlandı. GDB hem register hem DSP limitini `0x7D` olarak doğruladı. Oyun thread'i hâlâ `0x00162E2A` civarındaki ses işlemi beklemesinde; bunun sonraki nedeni henüz belirlenmedi. İlk oyun görüntüsü hâlâ çizilmedi.
 - GDB incelemesi, ikinci açılışın guest tarafında `0x001A1C40` noktasında `0xFD100410` kaydındaki `0x10000` bitinin temizlenmesini beklediğini gösterdi. Bu adres NV2A `NV_PFB_WBC` yazı belleği aktarım kaydıdır; bu katmanda yazı belleği önbelleği modellenmediğinden kod artık aktarımın hemen tamamlandığını bildiriyor. Yeni NV2A sözleşme kontrolü bu davranışı kapsıyor. Kaynak ve `./xxcl` hedefi derlendi; yeni izole çalışmada guest bu noktayı geçmiş durumda.
@@ -20,6 +21,6 @@
 
 ## Next move
 
-Next, trace why the guest still waits at `0x00162E2A` despite the previously failing DSP scratch DMA completing. Follow the actual guest/DSP data and completion signals; do not clear the guest's flag without the relevant operation. Then resume GPU command handling toward the first guest clear in the host window.
+Next, decode and implement the unsupported DSP instruction `0x0A0480` at `PC=0x066`, using the actual DSP56300 behavior and a game-independent contract test. Follow the guest/DSP completion signals; do not clear the guest's flag without the relevant operation. Then resume GPU command handling toward the first guest clear in the host window.
 
 Keep Xbox export signatures and calling conventions stable. Keep game-specific behavior out of generic VFS, file, and device dispatch; implement device behavior in device backends.

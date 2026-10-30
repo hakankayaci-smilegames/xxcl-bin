@@ -216,6 +216,39 @@ int main() {
         compare_core.program_counter() != 1 ||
         (compare_core.register_word(57) & (1u << 2)) == 0) return 25;
 
+    // CMP X0,A must compare the source value, not merely its sign extension.
+    words[0] = 0x0044f400; // MOVE #3,X0
+    words[1] = 3;
+    words[2] = 0x0056f400; // MOVE #0,A
+    words[3] = 0;
+    words[4] = 0x00200045; // CMP X0,A
+    if (!compare_core.bootstrap(table_physical, 1)) return 35;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 35;
+    }
+    if ((compare_core.register_word(57) & 0x0f) != 0x09 ||
+        compare_core.register_word(4) != 3 ||
+        compare_core.register_word(12) != 0) return 35;
+
+    words[3] = 3; // Compare equal nonzero values.
+    if (!compare_core.bootstrap(table_physical, 1)) return 36;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 36;
+    }
+    if ((compare_core.register_word(57) & 0x0f) != 0x04 ||
+        compare_core.register_word(4) != 3 ||
+        compare_core.register_word(12) != 3) return 36;
+
+    words[1] = 0x00ffffff; // X0 = -1; A = 0; A - X0 is positive.
+    words[3] = 0;
+    if (!compare_core.bootstrap(table_physical, 1)) return 37;
+    for (int step = 0; step < 3; ++step) {
+        if (compare_core.step() != xbe::kernel::ApuDspCore::StepResult::executed) return 37;
+    }
+    if ((compare_core.register_word(57) & 0x0f) != 0x01 ||
+        compare_core.register_word(4) != 0x00ffffff ||
+        compare_core.register_word(12) != 0) return 37;
+
     // BEQ consumes its long relative displacement and leaves the condition
     // register unchanged whether the branch is taken or not.
     words[0] = 0x00200013; // CLR A -> Z=1

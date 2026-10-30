@@ -755,7 +755,7 @@ ApuDspCore::StepResult ApuDspCore::step() {
 
         const uint32_t x0 = registers_[4] & dsp_word_mask;
         const uint32_t source_top = (x0 & (1u << 23)) != 0 ? 0xFF : 0;
-        const uint32_t source_mid = (x0 & (1u << 23)) != 0 ? dsp_word_mask : 0;
+        const uint32_t source_mid = x0;
         const uint32_t a0 = registers_[8] & dsp_word_mask;
         const uint32_t a1 = registers_[12] & dsp_word_mask;
         const uint32_t a2 = registers_[10] & 0xFF;
