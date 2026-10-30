@@ -124,25 +124,68 @@ int main() {
     if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
         *static_cast<uint32_t*>(third_page) != 0) return 4;
 
-    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
-        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
-        xbe::kernel::apu_process_mmio_writes() != 2 ||
-        !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 2) ||
+    // The failed request remains pending; increasing the limit lets the next
+    // execution batch complete the original DMA without resetting the DSP.
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 2) ||
         xbe::kernel::apu_process_mmio_writes() != 1) return 5;
-    if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+    if (xbe::kernel::apu_run_gp_dsp(1) != 1 ||
         *static_cast<uint32_t*>(third_page) != 0x00123456) return 6;
 
-    // The table base may also change while the loaded DSP program is running.
+    // A pending DMA also resumes when its table base is replaced.
     *static_cast<uint32_t*>(third_page) = 0;
     dma_entries[4] = 0;
     entries[4] = third_page_physical;
     if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
         !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
-        xbe::kernel::apu_process_mmio_writes() != 2 ||
-        !xbe::kernel::apu_queue_mmio_write(base + 0x2040, sge_physical) ||
-        xbe::kernel::apu_process_mmio_writes() != 1) return 7;
+        xbe::kernel::apu_process_mmio_writes() != 2) return 7;
     if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+        *static_cast<uint32_t*>(third_page) != 0) return 8;
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x2040, sge_physical) ||
+        xbe::kernel::apu_process_mmio_writes() != 1) return 7;
+    if (xbe::kernel::apu_run_gp_dsp(1) != 1 ||
         *static_cast<uint32_t*>(third_page) != 0x00123456) return 8;
+
+    // Populating an existing SGE entry needs no new MMIO register write.
+    *static_cast<uint32_t*>(third_page) = 0;
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x2040, dma_table_physical) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 3) return 9;
+    if (xbe::kernel::apu_run_gp_dsp(18) != 18 ||
+        *static_cast<uint32_t*>(third_page) != 0) return 10;
+    dma_entries[4] = third_page_physical;
+    if (xbe::kernel::apu_run_gp_dsp(1) != 1 ||
+        *static_cast<uint32_t*>(third_page) != 0x00123456) return 11;
+
+    // STOP and ABORT cancel a pending request instead of replaying it later.
+    for (const uint32_t action : {2u, 5u}) {
+        const uint32_t stop_program[] = {0x08f496, action};
+        std::memcpy(guest_bytes + sizeof(dma_program), stop_program, sizeof(stop_program));
+        *static_cast<uint32_t*>(third_page) = 0;
+        if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+            !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 1) ||
+            !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+            xbe::kernel::apu_process_mmio_writes() != 3) return 12;
+        if (xbe::kernel::apu_run_gp_dsp(19) != 19 ||
+            *static_cast<uint32_t*>(third_page) != 0) return 13;
+        if (!xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 2) ||
+            xbe::kernel::apu_process_mmio_writes() != 1 ||
+            xbe::kernel::apu_run_gp_dsp(1) != 1 ||
+            *static_cast<uint32_t*>(third_page) != 0) return 14;
+    }
+
+    // Bootstrapping a new program also discards the previous pending request.
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 1) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 3 ||
+        xbe::kernel::apu_run_gp_dsp(18) != 18) return 15;
+    if (!xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 0) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x20d4, 2) ||
+        !xbe::kernel::apu_queue_mmio_write(base + 0x3fffc, 3) ||
+        xbe::kernel::apu_process_mmio_writes() != 3 ||
+        xbe::kernel::apu_run_gp_dsp(1) != 1 ||
+        *static_cast<uint32_t*>(third_page) != 0) return 16;
 
     xbe::kernel::physical_memory_unregister(third_page);
     std::free(third_page);

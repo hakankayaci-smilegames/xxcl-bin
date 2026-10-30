@@ -28,6 +28,7 @@ public:
     uint32_t data_word(bool y_space, uint16_t address) const;
     uint32_t program_counter() const { return program_counter_; }
     void start_frame();
+    void service_dma();
     StepResult step();
 
 private:
@@ -50,6 +51,7 @@ private:
     std::array<uint32_t, 64> x_peripherals_{};
     std::array<uint32_t, 64> y_peripherals_{};
     ApuDspDma dma_;
+    bool dma_pending_ = false;
     uint32_t interrupts_ = 0;
     uint32_t sge_table_physical_ = 0;
     uint32_t max_sge_ = 0;

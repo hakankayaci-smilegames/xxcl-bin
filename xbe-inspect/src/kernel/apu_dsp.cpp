@@ -87,6 +87,7 @@ bool ApuDspCore::bootstrap(uint32_t sge_table_physical, uint32_t max_sge) {
     x_peripherals_.fill(0);
     y_peripherals_.fill(0);
     dma_.reset();
+    dma_pending_ = false;
     interrupts_ = 0;
     registers_.fill(0);
     for (uint32_t index = 32; index < 40; ++index) registers_[index] = 0xFFFF;
@@ -131,18 +132,20 @@ void ApuDspCore::write_peripheral_word(bool y_space, uint8_t address, uint32_t v
     if (!y_space && address >= 0x14 && address <= 0x17) {
         const auto reg = dma_register_for_peripheral(address);
         dma_.write(reg, value);
-        if (address == 0x16 && (value & ApuDspDma::action_mask) ==
-                                   ApuDspDma::action_start) {
-            const bool completed = dma_.run_descriptors(
-                x_memory_, y_memory_, program_, transfer_dma_buffer, this);
-            if (completed && dma_.end_of_list()) interrupts_ |= 1u << 7;
+        const uint32_t action = value & ApuDspDma::action_mask;
+        if (address == 0x16 && action == ApuDspDma::action_start) {
+            dma_pending_ = true;
+            service_dma();
             if (std::getenv("XXCL_TRACE_APU")) {
                 std::fprintf(stderr,
                              "[APU DSP DMA] descriptor run %s; next=0x%06X EOL=%u\n",
-                             completed ? "completed" : "stopped",
+                             dma_pending_ ? "pending" : "completed",
                              dma_.read(ApuDspDma::Register::next_block),
                              dma_.end_of_list() ? 1u : 0u);
             }
+        } else if (address == 0x16 &&
+                   (action == ApuDspDma::action_stop || action == ApuDspDma::action_abort)) {
+            dma_pending_ = false;
         }
         if (std::getenv("XXCL_TRACE_APU")) {
             std::fprintf(stderr, "[APU DSP DMA] register X:$%02X write = 0x%06X\n",
@@ -151,6 +154,13 @@ void ApuDspCore::write_peripheral_word(bool y_space, uint8_t address, uint32_t v
         return;
     }
     (y_space ? y_peripherals_ : x_peripherals_)[address] = value;
+}
+
+void ApuDspCore::service_dma() {
+    if (!dma_pending_) return;
+    if (!dma_.run_descriptors(x_memory_, y_memory_, program_, transfer_dma_buffer, this)) return;
+    dma_pending_ = false;
+    if (dma_.end_of_list()) interrupts_ |= 1u << 7;
 }
 
 bool ApuDspCore::transfer_dma_buffer(void* context, uint32_t buffer_id,

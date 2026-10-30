@@ -243,6 +243,7 @@ size_t apu_run_gp_dsp(uint32_t instruction_budget) {
     if ((gp_reset_value & (gp_reset_bit | gp_dsp_reset_bit)) !=
         (gp_reset_bit | gp_dsp_reset_bit)) return 0;
 
+    gp_dsp.service_dma();
     uint32_t executed = 0;
     while (executed < instruction_budget) {
         const uint32_t pc = gp_dsp.program_counter();
